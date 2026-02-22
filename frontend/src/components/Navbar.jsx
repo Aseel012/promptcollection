@@ -46,7 +46,7 @@ const Navbar = ({ toggleSidebar }) => {
                 if (Array.isArray(promptsArray)) {
                     // sort newest first, take top 5
                     const sorted = [...promptsArray].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
-                    setNotifications(sorted);
+                    setRecentPrompts(sorted);
                 }
             })
             .catch(() => { });
