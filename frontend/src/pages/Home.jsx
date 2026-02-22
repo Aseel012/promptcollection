@@ -11,6 +11,14 @@ const Home = () => {
     const { user } = useAuth();
     const location = useLocation();
     const [prompts, setPrompts] = useState([]);
+    const [categories, setCategories] = useState([]);
+    const [engines, setEngines] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedPrompt, setSelectedPrompt] = useState(null);
+    const [copiedId, setCopiedId] = useState(null);
+    const [activeChip, setActiveChip] = useState("All");
+    const [likedPrompts, setLikedPrompts] = useState([]);
+    const [recentPrompts, setRecentPrompts] = useState([]);
     const [isJoined, setIsJoined] = useState(false);
     const [pageNumber, setPageNumber] = useState(1);
     const [totalPages, setTotalPages] = useState(1);

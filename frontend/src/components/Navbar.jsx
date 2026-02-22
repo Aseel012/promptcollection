@@ -42,10 +42,11 @@ const Navbar = ({ toggleSidebar }) => {
         fetch(API_ENDPOINTS.PROMPTS)
             .then(r => r.json())
             .then(data => {
-                if (Array.isArray(data)) {
-                    // sort newest first, take top 8
-                    const sorted = [...data].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 8);
-                    setRecentPrompts(sorted);
+                const promptsArray = Array.isArray(data) ? data : (data.prompts || []);
+                if (Array.isArray(promptsArray)) {
+                    // sort newest first, take top 5
+                    const sorted = [...promptsArray].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+                    setNotifications(sorted);
                 }
             })
             .catch(() => { });
