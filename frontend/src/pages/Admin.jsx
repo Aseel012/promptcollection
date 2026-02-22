@@ -69,7 +69,8 @@ const Admin = () => {
 
             if (promptRes.ok) {
                 const promptData = await promptRes.json();
-                setPrompts(Array.isArray(promptData) ? promptData : []);
+                const promptsArray = Array.isArray(promptData) ? promptData : (promptData.prompts || []);
+                setPrompts(promptsArray);
             }
             if (catRes.ok) {
                 const catData = await catRes.json();

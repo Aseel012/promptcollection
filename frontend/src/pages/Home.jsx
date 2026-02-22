@@ -11,26 +11,32 @@ const Home = () => {
     const { user } = useAuth();
     const location = useLocation();
     const [prompts, setPrompts] = useState([]);
-    const [categories, setCategories] = useState([]);
-    const [engines, setEngines] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [selectedPrompt, setSelectedPrompt] = useState(null);
-    const [copiedId, setCopiedId] = useState(null);
-    const [activeChip, setActiveChip] = useState("All");
-    const [likedPrompts, setLikedPrompts] = useState([]);
-    const [recentPrompts, setRecentPrompts] = useState([]);
     const [isJoined, setIsJoined] = useState(false);
+    const [pageNumber, setPageNumber] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
                 const [promptRes, catRes, engRes] = await Promise.all([
-                    fetch(API_ENDPOINTS.PROMPTS),
+                    fetch(`${API_ENDPOINTS.PROMPTS}?pageNumber=${pageNumber}`),
                     fetch(API_ENDPOINTS.CATEGORIES),
                     fetch(API_ENDPOINTS.ENGINES),
                 ]);
                 const promptData = await promptRes.json();
-                setPrompts(promptData || []);
+
+                // Handle paginated response: { prompts, page, pages }
+                if (promptData.prompts) {
+                    if (pageNumber === 1) {
+                        setPrompts(promptData.prompts);
+                    } else {
+                        setPrompts(prev => [...prev, ...promptData.prompts]);
+                    }
+                    setTotalPages(promptData.pages);
+                } else if (Array.isArray(promptData)) {
+                    setPrompts(promptData);
+                }
+
                 const catData = await catRes.json();
                 setCategories(catData || []);
                 const engData = await engRes.json();
@@ -45,7 +51,7 @@ const Home = () => {
 
         const storedRecent = JSON.parse(localStorage.getItem('recent_prompts') || '[]');
         setRecentPrompts(storedRecent);
-    }, []);
+    }, [pageNumber]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
@@ -131,6 +137,7 @@ const Home = () => {
 
     const handleChipClick = (name) => {
         setActiveChip(name);
+        setPageNumber(1); // Reset to page 1 on filter
     };
 
     // Build chip engine names from DB engines + fallback static
@@ -244,6 +251,18 @@ const Home = () => {
                             </div>
                         ))}
                     </Masonry>
+                )}
+
+                {/* Pagination Controls */}
+                {!loading && pageNumber < totalPages && (
+                    <div className="flex justify-center py-10">
+                        <button
+                            onClick={() => setPageNumber(prev => prev + 1)}
+                            className="px-8 py-3 bg-zinc-900 border border-white/10 rounded-full text-sm font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors"
+                        >
+                            Load More Prompts
+                        </button>
+                    </div>
                 )}
             </div>
 

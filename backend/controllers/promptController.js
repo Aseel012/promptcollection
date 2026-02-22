@@ -1,12 +1,26 @@
 const Prompt = require('../models/Prompt');
 
-// @desc    Fetch all prompts
+// @desc    Fetch all prompts (with pagination and basic field filtering)
 // @route   GET /api/prompts
 // @access  Public
 const getPrompts = async (req, res, next) => {
     try {
-        const prompts = await Prompt.find({});
-        res.json(prompts);
+        const pageSize = 12; // Standard masonry grid page size
+        const page = Number(req.query.pageNumber) || 1;
+        const keyword = req.query.keyword ? {
+            title: {
+                $regex: req.query.keyword,
+                $options: 'i'
+            }
+        } : {};
+
+        const count = await Prompt.countDocuments({ ...keyword });
+        const prompts = await Prompt.find({ ...keyword })
+            .limit(pageSize)
+            .skip(pageSize * (page - 1))
+            .sort({ createdAt: -1 });
+
+        res.json({ prompts, page, pages: Math.ceil(count / pageSize) });
     } catch (error) {
         next(error);
     }
