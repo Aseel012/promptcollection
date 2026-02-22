@@ -1,5 +1,7 @@
-const express = require('express');
 const dotenv = require('dotenv');
+dotenv.config();
+
+const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
@@ -12,7 +14,6 @@ const promptRoutes = require('./routes/promptRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const engineRoutes = require('./routes/engineRoutes');
 
-dotenv.config();
 connectDB();
 
 const app = express();
