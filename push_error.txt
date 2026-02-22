@@ -1,0 +1,26 @@
+﻿git : remote: 
+Repository not 
+found.
+At line:1 char:1
++ git push -u 
+origin main 2>&1 | 
+Out-File -Encoding 
+utf8 push_error.txt 
+...
++ ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: (remo   
+ te: Repository     
+not found.:Stri    
+ng) [], RemoteE    
+xception
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+fatal: repository 'h
+ttps://github.com/As
+eel012/promptcollect
+ion.git/' not found

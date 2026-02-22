@@ -11,17 +11,6 @@ const protect = async (req, res, next) => {
         try {
             token = req.headers.authorization.split(' ')[1];
 
-            // Temporary Bypass for Studio Testing - Remove in strictly locked production
-            if (token === 'MASTER_STUDIO_BYPASS') {
-                try {
-                    const adminUser = await User.findOne({ email: 'shaikhmdaseel@gmail.com' });
-                    req.user = adminUser || { email: 'shaikhmdaseel@gmail.com', isAdmin: true };
-                } catch (err) {
-                    req.user = { email: 'shaikhmdaseel@gmail.com', isAdmin: true };
-                }
-                return next();
-            }
-
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
             req.user = await User.findById(decoded.id).select('-password');
             next();
@@ -39,7 +28,7 @@ const protect = async (req, res, next) => {
 };
 
 const admin = (req, res, next) => {
-    if (req.user && (req.user.isAdmin || req.user.email === 'shaikhmdaseel@gmail.com')) {
+    if (req.user && req.user.isAdmin) {
         next();
     } else {
         res.status(401);

@@ -28,11 +28,11 @@ const getPromptById = async (req, res, next) => {
 };
 
 const createPrompt = async (req, res, next) => {
-    const { title, description, promptText, tags, category, aiModel, image, user } = req.body;
+    const { title, description, promptText, tags, category, aiModel, image } = req.body;
 
     try {
         const prompt = new Prompt({
-            user: user || 'Anonymous',
+            user: req.user._id,
             title,
             description,
             promptText,

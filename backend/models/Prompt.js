@@ -3,16 +3,19 @@ const mongoose = require('mongoose');
 const promptSchema = mongoose.Schema(
     {
         user: {
-            type: String,
+            type: mongoose.Schema.Types.ObjectId,
             required: true,
+            ref: 'User',
         },
         title: {
             type: String,
             required: true,
+            maxlength: [100, 'Title cannot exceed 100 characters'],
         },
         description: {
             type: String,
             required: true,
+            maxlength: [500, 'Description cannot exceed 500 characters'],
         },
         promptText: {
             type: String,
