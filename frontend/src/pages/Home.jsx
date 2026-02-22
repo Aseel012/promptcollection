@@ -34,7 +34,7 @@ const Home = () => {
                 const promptData = await promptRes.json();
 
                 // Handle paginated response: { prompts, page, pages }
-                if (promptData.prompts) {
+                if (promptData && promptData.prompts) {
                     if (pageNumber === 1) {
                         setPrompts(promptData.prompts);
                     } else {
@@ -43,6 +43,10 @@ const Home = () => {
                     setTotalPages(promptData.pages);
                 } else if (Array.isArray(promptData)) {
                     setPrompts(promptData);
+                    setTotalPages(1);
+                } else {
+                    console.error("Malformed prompt data:", promptData);
+                    setPrompts([]);
                 }
 
                 const catData = await catRes.json();
