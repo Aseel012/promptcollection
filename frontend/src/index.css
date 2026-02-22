@@ -1,0 +1,85 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #0f0f0f;
+    color: #ffffff;
+    @apply antialiased;
+    font-family: 'Inter', sans-serif;
+    font-weight: 400;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-semibold tracking-tight text-white;
+  }
+
+  /* YT Style Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #333333;
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #444444;
+  }
+}
+
+@layer components {
+  .yt-card {
+    @apply flex flex-col gap-3 cursor-pointer transition-all duration-300;
+  }
+
+  .yt-input {
+    @apply bg-zinc-900 border border-white/10 rounded-full px-6 py-3 text-white focus:border-white focus:outline-none transition-all placeholder:text-zinc-500 text-sm;
+  }
+
+  /* YouTube-style chip — normal weight, no uppercase */
+  .yt-chip {
+    @apply px-4 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm font-medium transition-all whitespace-nowrap;
+  }
+
+  .yt-chip-active {
+    @apply bg-white text-black font-semibold hover:bg-zinc-200;
+  }
+
+  /* Masonry Grid Styles */
+  .my-masonry-grid {
+    display: flex;
+    margin-left: -24px;
+    width: auto;
+  }
+
+  .my-masonry-grid_column {
+    padding-left: 24px;
+    background-clip: padding-box;
+  }
+
+  .my-masonry-grid_column>div {
+    margin-bottom: 24px;
+  }
+
+  /* Hide scrollbar but keep scroll functionality */
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
