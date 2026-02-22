@@ -85,7 +85,7 @@ const Admin = () => {
             }
         } catch (error) {
             console.error("Critical Sync Failure:", error);
-            setError("Database Uplink Failed. Ensure backend is active and MongoDB is whitelisted.");
+            setError(`Database Uplink Failed. Attempted: ${API_BASE_URL}. Ensure backend is active and MongoDB is whitelisted.`);
             setDbHealth({ db: 'OFFLINE' });
             setPrompts([]);
             setCategories([]);
@@ -269,7 +269,7 @@ const Admin = () => {
                         <div className="flex items-center gap-3 flex-wrap">
                             <span className="text-[10px] font-bold text-zinc-500 bg-zinc-900 border border-white/5 px-3 py-1 rounded-full uppercase">{user.email}</span>
                             <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase ${dbHealth?.db === 'CONNECTED' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500 animate-pulse'}`}>
-                                <Database size={12} /> {dbHealth?.db || 'OFFLINE'}
+                                <Database size={12} /> {dbHealth?.db || 'OFFLINE'} · {API_BASE_URL}
                             </div>
                             <button onClick={fetchData} className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white transition-colors">
                                 <RefreshCw size={11} /> Refresh

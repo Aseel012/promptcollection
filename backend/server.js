@@ -19,7 +19,11 @@ const app = express();
 
 // 1. CORS - MUST BE FIRST
 const corsOptions = {
-    origin: true, // Allow all origins temporarily for 100% connectivity debugging
+    origin: [
+        'https://promptcollection-lake.vercel.app',
+        'http://localhost:5173',
+        'http://localhost:3000'
+    ],
     credentials: true,
     optionsSuccessStatus: 200,
 };
