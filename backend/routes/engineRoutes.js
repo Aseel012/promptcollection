@@ -7,13 +7,13 @@ const {
     updateEngine,
     deleteEngine,
 } = require('../controllers/engineController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { firebaseAuth } = require('../middleware/firebaseAuth');
 
-router.route('/').get(getEngines).post(protect, admin, createEngine);
+router.route('/').get(getEngines).post(firebaseAuth, createEngine);
 router
     .route('/:id')
     .get(getEngineById)
-    .put(protect, admin, updateEngine)
-    .delete(protect, admin, deleteEngine);
+    .put(firebaseAuth, updateEngine)
+    .delete(firebaseAuth, deleteEngine);
 
 module.exports = router;

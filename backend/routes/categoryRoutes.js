@@ -5,9 +5,9 @@ const {
     createCategory,
     deleteCategory,
 } = require('../controllers/categoryController');
-const { protect, admin } = require('../middleware/authMiddleware');
+const { firebaseAuth } = require('../middleware/firebaseAuth');
 
-router.route('/').get(getCategories).post(protect, admin, createCategory);
-router.route('/:id').delete(protect, admin, deleteCategory);
+router.route('/').get(getCategories).post(firebaseAuth, createCategory);
+router.route('/:id').delete(firebaseAuth, deleteCategory);
 
 module.exports = router;

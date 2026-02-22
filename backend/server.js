@@ -1,8 +1,8 @@
 const express = require('express');
 const dotenv = require('dotenv');
-const morgan = require('morgan');
-const helmet = require('helmet');
 const cors = require('cors');
+const helmet = require('helmet');
+const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
 const connectDB = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
@@ -13,53 +13,47 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const engineRoutes = require('./routes/engineRoutes');
 
 dotenv.config();
-
 connectDB();
 
 const app = express();
 
-// Security Middleware
-app.use(helmet());
-
+// 1. CORS - MUST BE FIRST
 const corsOptions = {
-    origin: (origin, callback) => {
-        const allowedOrigins = [
-            process.env.FRONTEND_URL,
-            'http://localhost:5173',
-            'http://localhost:3000'
-        ].filter(Boolean);
-
-        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.some(ao => origin.endsWith(ao.replace(/^https?:\/\//, '')))) {
-            callback(null, true);
-        } else {
-            callback(new Error('Not allowed by CORS'));
-        }
-    },
+    origin: true, // Allow all origins temporarily for 100% connectivity debugging
     credentials: true,
     optionsSuccessStatus: 200,
 };
 app.use(cors(corsOptions));
 
-// Rate Limiting
+// 2. Security & Logging
+app.use(helmet({
+    crossOriginResourcePolicy: false, // Help with loading external images
+}));
+app.use(morgan('dev'));
+
+// Request Logger for debugging Render hangs
+app.use((req, res, next) => {
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
+});
+
+// 3. Rate Limiting
 const limiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // limit each IP to 100 requests per windowMs
+    windowMs: 15 * 60 * 1000,
+    max: 200, // Increased for admin dashboard
 });
 app.use('/api/', limiter);
 
-if (process.env.NODE_ENV === 'development') {
-    app.use(morgan('dev'));
-}
-
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ limit: '1mb', extended: true }));
+app.use(express.json({ limit: '10mb' })); // Increased for image uploads
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 app.get('/api/health', (req, res) => {
     const mongoose = require('mongoose');
     res.json({
         status: 'UP',
         db: mongoose.connection.readyState === 1 ? 'CONNECTED' : 'DISCONNECTED',
-        timestamp: new Date()
+        timestamp: new Date(),
+        origin: req.headers.origin
     });
 });
 
