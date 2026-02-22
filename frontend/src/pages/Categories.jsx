@@ -11,7 +11,7 @@ const Categories = () => {
     useEffect(() => {
         const fetchCategories = async () => {
             try {
-                const response = await fetch('http://localhost:5000/api/categories');
+                const response = await fetch(API_ENDPOINTS.CATEGORIES);
                 const data = await response.json();
                 setCategories(data || []);
             } catch (error) {

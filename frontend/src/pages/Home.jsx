@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import Masonry from 'react-masonry-css';
+import { API_ENDPOINTS } from '../api/apiConfig';
 
 const Home = () => {
     const { user } = useAuth();
@@ -24,9 +25,9 @@ const Home = () => {
         const fetchData = async () => {
             try {
                 const [promptRes, catRes, engRes] = await Promise.all([
-                    fetch('http://localhost:5000/api/prompts'),
-                    fetch('http://localhost:5000/api/categories'),
-                    fetch('http://localhost:5000/api/engines'),
+                    fetch(API_ENDPOINTS.PROMPTS),
+                    fetch(API_ENDPOINTS.CATEGORIES),
+                    fetch(API_ENDPOINTS.ENGINES),
                 ]);
                 const promptData = await promptRes.json();
                 setPrompts(promptData || []);

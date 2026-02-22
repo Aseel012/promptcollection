@@ -6,6 +6,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { API_ENDPOINTS, API_BASE_URL } from '../api/apiConfig';
 
 const FALLBACK_ENGINES = ["Midjourney", "DALL-E 3", "Stable Diffusion XL", "Leonardo AI", "Freepik", "Gemini"];
 
@@ -52,7 +53,7 @@ const Admin = () => {
         setLoading(true);
         try {
             setError(null);
-            const healthRes = await fetch('http://localhost:5000/api/health').catch(() => null);
+            const healthRes = await fetch(API_ENDPOINTS.HEALTH).catch(() => null);
             if (healthRes && healthRes.ok) {
                 const healthData = await healthRes.json();
                 setDbHealth(healthData);
@@ -61,9 +62,9 @@ const Admin = () => {
             }
 
             const [promptRes, catRes, engRes] = await Promise.all([
-                fetch('http://localhost:5000/api/prompts'),
-                fetch('http://localhost:5000/api/categories'),
-                fetch('http://localhost:5000/api/engines'),
+                fetch(API_ENDPOINTS.PROMPTS),
+                fetch(API_ENDPOINTS.CATEGORIES),
+                fetch(API_ENDPOINTS.ENGINES),
             ]);
 
             if (promptRes.ok) {
@@ -139,8 +140,8 @@ const Admin = () => {
 
             const method = editingPrompt ? 'PUT' : 'POST';
             const url = editingPrompt
-                ? `http://localhost:5000/api/prompts/${editingPrompt._id}`
-                : 'http://localhost:5000/api/prompts';
+                ? `${API_ENDPOINTS.PROMPTS}/${editingPrompt._id}`
+                : API_ENDPOINTS.PROMPTS;
 
             const response = await fetch(url, {
                 method,
@@ -169,7 +170,7 @@ const Admin = () => {
         if (actionLoading) return;
         setActionLoading(true);
         try {
-            const response = await fetch('http://localhost:5000/api/categories', {
+            const response = await fetch(API_ENDPOINTS.CATEGORIES, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer MASTER_STUDIO_BYPASS' },
                 body: JSON.stringify(categoryData)
@@ -210,8 +211,8 @@ const Admin = () => {
         try {
             const method = editingEngine ? 'PUT' : 'POST';
             const url = editingEngine
-                ? `http://localhost:5000/api/engines/${editingEngine._id}`
-                : 'http://localhost:5000/api/engines';
+                ? `${API_ENDPOINTS.ENGINES}/${editingEngine._id}`
+                : API_ENDPOINTS.ENGINES;
 
             const response = await fetch(url, {
                 method,
@@ -238,7 +239,7 @@ const Admin = () => {
     const handleDelete = async (id, type) => {
         if (window.confirm(`Delete this ${type}?`)) {
             try {
-                await fetch(`http://localhost:5000/api/${type}s/${id}`, {
+                await fetch(`${API_BASE_URL}/api/${type}s/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': 'Bearer MASTER_STUDIO_BYPASS' }
                 });

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Menu, Search, User as UserIcon, PlusSquare, Bell, LogOut, Shield, X, Image } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { API_ENDPOINTS } from '../api/apiConfig';
 
 const Navbar = ({ toggleSidebar }) => {
     const { user, logout } = useAuth();
@@ -38,7 +39,7 @@ const Navbar = ({ toggleSidebar }) => {
     // Fetch recent prompts to show as notifications
     useEffect(() => {
         if (!isJoined) return;
-        fetch('http://localhost:5000/api/prompts')
+        fetch(API_ENDPOINTS.PROMPTS)
             .then(r => r.json())
             .then(data => {
                 if (Array.isArray(data)) {
