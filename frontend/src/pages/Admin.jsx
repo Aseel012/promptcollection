@@ -56,7 +56,9 @@ const Admin = () => {
             const healthRes = await fetch(API_ENDPOINTS.HEALTH).catch(() => null);
             if (healthRes && healthRes.ok) {
                 const healthData = await healthRes.json();
-                setDbHealth(healthData);
+                // Handle both 'db' (PostgreSQL) and legacy 'database' formats
+                const status = healthData.db || healthData.database || 'OFFLINE';
+                setDbHealth({ db: status });
             } else {
                 setDbHealth({ db: 'OFFLINE' });
             }
@@ -70,7 +72,7 @@ const Admin = () => {
             if (promptRes.ok) {
                 const promptData = await promptRes.json();
                 const promptsArray = Array.isArray(promptData) ? promptData : (promptData.prompts || []);
-                setPrompts(promptsArray);
+                setPrompts(Array.isArray(promptsArray) ? promptsArray : []);
             }
             if (catRes.ok) {
                 const catData = await catRes.json();
@@ -86,7 +88,17 @@ const Admin = () => {
             }
         } catch (error) {
             console.error("Critical Sync Failure:", error);
-            setError(`Database Uplink Failed. Attempted: ${API_BASE_URL}. Ensure backend is active and MongoDB is whitelisted.`);
+            const errorMessage = error.message || "Unknown Connection Error";
+            setError(`
+                CRITICAL: DATABASE UPLINK FAILED
+                Attempted: ${API_BASE_URL}
+                
+                TROUBLESHOOTING:
+                1. Check if Render/Local backend is ACTIVE/LIVE
+                2. Verify INSFORGE_POSTGRES_URL in .env
+                3. Ensure PostgreSQL DB is accessible from this host
+                4. Error Details: ${errorMessage}
+            `);
             setDbHealth({ db: 'OFFLINE' });
             setPrompts([]);
             setCategories([]);

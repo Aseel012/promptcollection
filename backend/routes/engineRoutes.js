@@ -8,12 +8,13 @@ const {
     deleteEngine,
 } = require('../controllers/engineController');
 const { firebaseAuth } = require('../middleware/firebaseAuth');
+const { admin } = require('../middleware/adminMiddleware');
 
-router.route('/').get(getEngines).post(firebaseAuth, createEngine);
+router.route('/').get(getEngines).post(firebaseAuth, admin, createEngine);
 router
     .route('/:id')
     .get(getEngineById)
-    .put(firebaseAuth, updateEngine)
-    .delete(firebaseAuth, deleteEngine);
+    .put(firebaseAuth, admin, updateEngine)
+    .delete(firebaseAuth, admin, deleteEngine);
 
 module.exports = router;

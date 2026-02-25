@@ -15,23 +15,18 @@ if (fs.existsSync(localPath)) {
 
     let privateKey = process.env.FIREBASE_PRIVATE_KEY;
     if (privateKey) {
-        // 1. Strip outer quotes if any
-        privateKey = privateKey.trim().replace(/^["']|["']$/g, '');
-        // 2. Replace literal escaped \n with real \n
-        privateKey = privateKey.replace(/\\n/g, '\n');
+        // Remove quotes and handle escaped newlines
+        privateKey = privateKey.replace(/^"(.*)"$/, '$1').replace(/\\n/g, '\n');
 
-        // 3. Ensure header/footer are present and on their own lines
         const header = '-----BEGIN PRIVATE KEY-----';
         const footer = '-----END PRIVATE KEY-----';
 
-        if (!privateKey.includes(header)) privateKey = header + '\n' + privateKey;
-        if (!privateKey.includes(footer)) privateKey = privateKey + '\n' + footer;
+        // Only add header/footer if absolutely missing
+        if (!privateKey.includes(header)) privateKey = `${header}\n${privateKey}`;
+        if (!privateKey.includes(footer)) privateKey = `${privateKey}\n${footer}`;
 
-        // Final sanity check for PEM format
-        if (privateKey.split('\n').length < 3) {
-            // If still single line, force breaks after header and before footer
-            privateKey = privateKey.replace(header, header + '\n').replace(footer, '\n' + footer);
-        }
+        // Final trim to ensure no trailing junk
+        privateKey = privateKey.trim();
     }
 
     serviceAccount = {

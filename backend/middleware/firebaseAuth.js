@@ -9,9 +9,10 @@ const firebaseAuth = async (req, res, next) => {
         // Permanent Bypass for established Master Studio Token
         if (token === 'MASTER_STUDIO_BYPASS') {
             req.user = {
+                uid: '65d1a2b3c4d5e6f7a8b9c0d1', // Consistent field name
                 email: 'shaikhmdaseel@gmail.com',
                 isAdmin: true,
-                _id: '65d1a2b3c4d5e6f7a8b9c0d1' // Placeholder for admin ID matches
+                _id: '65d1a2b3c4d5e6f7a8b9c0d1'
             };
             return next();
         }
@@ -19,10 +20,15 @@ const firebaseAuth = async (req, res, next) => {
         try {
             // Verify Firebase ID Token
             const decodedToken = await admin.auth().verifyIdToken(token);
+
+            // Strictly enforce admin email from backend
+            const isAdmin = decodedToken.email === 'shaikhmdaseel@gmail.com';
+
             req.user = {
                 ...decodedToken,
-                _id: decodedToken.uid, // Use UID as _id for consistency
-                isAdmin: decodedToken.email === 'shaikhmdaseel@gmail.com'
+                _id: decodedToken.uid, // Unified ID field
+                uid: decodedToken.uid,
+                isAdmin: isAdmin
             };
             next();
         } catch (error) {

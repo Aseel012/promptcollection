@@ -8,12 +8,13 @@ const {
     deletePrompt,
 } = require('../controllers/promptController');
 const { firebaseAuth } = require('../middleware/firebaseAuth');
+const { admin } = require('../middleware/adminMiddleware');
 
-router.route('/').get(getPrompts).post(firebaseAuth, createPrompt);
+router.route('/').get(getPrompts).post(firebaseAuth, admin, createPrompt);
 router
     .route('/:id')
     .get(getPromptById)
-    .put(firebaseAuth, updatePrompt)
-    .delete(firebaseAuth, deletePrompt);
+    .put(firebaseAuth, admin, updatePrompt)
+    .delete(firebaseAuth, admin, deletePrompt);
 
 module.exports = router;

@@ -14,11 +14,11 @@ const getPrompts = async (req, res, next) => {
             }
         } : {};
 
-        const count = await Prompt.countDocuments({ ...keyword });
-        const prompts = await Prompt.find({ ...keyword })
-            .limit(pageSize)
-            .skip(pageSize * (page - 1))
-            .sort({ createdAt: -1 });
+        const count = await Prompt.countDocuments(keyword);
+        const prompts = await Prompt.find(keyword, {
+            limit: pageSize,
+            skip: pageSize * (page - 1)
+        });
 
         res.json({ prompts, page, pages: Math.ceil(count / pageSize) });
     } catch (error) {
@@ -45,20 +45,24 @@ const createPrompt = async (req, res, next) => {
     const { title, description, promptText, tags, category, aiModel, image } = req.body;
 
     try {
-        const prompt = new Prompt({
+        console.log('--- ATTEMPTING PROMPT CREATION ---');
+        console.log('User ID:', req.user._id);
+        console.log('Title:', title);
+
+        const createdPrompt = await Prompt.create({
             user: req.user._id,
             title,
             description,
             promptText,
-            tags,
+            tags: Array.isArray(tags) ? tags : (tags ? tags.split(',').map(t => t.trim()) : []),
             category,
             aiModel,
             image,
         });
-
-        const createdPrompt = await prompt.save();
+        console.log('✅ Prompt Created Successfully:', createdPrompt._id);
         res.status(201).json(createdPrompt);
     } catch (error) {
+        console.error('❌ Prompt Creation Failed:', error.message);
         next(error);
     }
 };

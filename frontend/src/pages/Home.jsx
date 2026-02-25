@@ -25,6 +25,15 @@ const Home = () => {
 
     useEffect(() => {
         const fetchData = async () => {
+            // Load from cache first for "instant" feel
+            const cachedPrompts = localStorage.getItem('cache_prompts');
+            const cachedCategories = localStorage.getItem('cache_categories');
+            const cachedEngines = localStorage.getItem('cache_engines');
+
+            if (cachedPrompts && pageNumber === 1) setPrompts(JSON.parse(cachedPrompts));
+            if (cachedCategories) setCategories(JSON.parse(cachedCategories));
+            if (cachedEngines) setEngines(JSON.parse(cachedEngines));
+
             try {
                 const [promptRes, catRes, engRes] = await Promise.all([
                     fetch(`${API_ENDPOINTS.PROMPTS}?pageNumber=${pageNumber}`),
@@ -37,24 +46,33 @@ const Home = () => {
                 if (promptData && promptData.prompts) {
                     if (pageNumber === 1) {
                         setPrompts(promptData.prompts);
+                        localStorage.setItem('cache_prompts', JSON.stringify(promptData.prompts));
                     } else {
                         setPrompts(prev => [...prev, ...promptData.prompts]);
                     }
                     setTotalPages(promptData.pages);
                 } else if (Array.isArray(promptData)) {
                     setPrompts(promptData);
+                    if (pageNumber === 1) localStorage.setItem('cache_prompts', JSON.stringify(promptData));
                     setTotalPages(1);
-                } else {
-                    console.error("Malformed prompt data:", promptData);
-                    setPrompts([]);
                 }
 
                 const catData = await catRes.json();
-                setCategories(catData || []);
+                if (Array.isArray(catData)) {
+                    setCategories(catData);
+                    localStorage.setItem('cache_categories', JSON.stringify(catData));
+                }
+
                 const engData = await engRes.json();
-                setEngines(Array.isArray(engData) ? engData : []);
+                if (Array.isArray(engData)) {
+                    setEngines(engData);
+                    localStorage.setItem('cache_engines', JSON.stringify(engData));
+                }
             } catch (error) {
                 console.error("Connection error:", error);
+                // Fallback to empty if nothing in cache and first load
+                if (!cachedPrompts) setPrompts([]);
+                if (!cachedCategories) setCategories([]);
             } finally {
                 setLoading(false);
             }

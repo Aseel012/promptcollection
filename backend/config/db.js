@@ -1,38 +1,33 @@
-const mongoose = require('mongoose');
+const { Pool } = require('pg');
+
+const pool = new Pool({
+  connectionString: process.env.INSFORGE_POSTGRES_URL,
+});
 
 const connectDB = async () => {
   try {
-    console.log('--- DB CONNECTION ATTEMPT ---');
-    console.log('URI:', process.env.MONGO_URI ? 'SET (Hidden for security)' : 'NOT SET');
+    console.log('--- DB CONNECTION ATTEMPT (INSFORGE POSTGRES) ---');
 
-    // Disable command buffering globally so it fails fast if not connected
-    mongoose.set('bufferCommands', false);
+    const client = await pool.connect();
+    console.log('✅ InsForge PostgreSQL Connected');
 
-    const conn = await mongoose.connect(process.env.MONGO_URI, {
-      serverSelectionTimeoutMS: 15000,
-      socketTimeoutMS: 45000,
-    });
+    // Test query
+    const res = await client.query('SELECT NOW()');
+    console.log('📡 Database Time:', res.rows[0].now);
 
-    console.log(`✅ MongoDB Connected: ${conn.connection.host}`);
-
-    mongoose.connection.on('error', err => {
-      console.error('❌ MongoDB Connection Error:', err.message);
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      console.log('⚠️ MongoDB Connection Lost');
-    });
+    client.release();
 
   } catch (error) {
     console.error('❌ DATABASE CONNECTION FAILED');
     console.error('Error Message:', error.message);
 
-    if (error.message.includes('IP address') || error.message.includes('whitelist')) {
-      console.error('🚨 ACTION REQUIRED: Your IP is not whitelisted in MongoDB Atlas.');
-    } else if (error.message.includes('ETIMEOUT')) {
-      console.error('🚨 ACTION REQUIRED: Connection timed out. Check your internet or Atlas IP Access List.');
+    if (error.message.includes('password authentication failed')) {
+      console.error('🚨 ACTION REQUIRED: Database credentials are incorrect.');
+    } else if (error.message.includes('ECONNREFUSED')) {
+      console.error('🚨 ACTION REQUIRED: Connection refused. Check if the database is running and accessible.');
     }
   }
 };
 
-module.exports = connectDB;
+module.exports = { connectDB, pool };
+

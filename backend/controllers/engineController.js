@@ -5,7 +5,7 @@ const Engine = require('../models/Engine');
 // @access  Public
 const getEngines = async (req, res, next) => {
     try {
-        const engines = await Engine.find({}).sort({ createdAt: -1 });
+        const engines = await Engine.find({}); // SQL order is handled in model
         res.json(engines);
     } catch (error) {
         next(error);
@@ -40,14 +40,13 @@ const createEngine = async (req, res, next) => {
             res.status(400);
             throw new Error('Engine with this name already exists');
         }
-        const engine = new Engine({
+        const created = await Engine.create({
             name: name?.trim(),
             description,
             website,
             icon,
             isActive: isActive !== undefined ? isActive : true,
         });
-        const created = await engine.save();
         res.status(201).json(created);
     } catch (error) {
         next(error);

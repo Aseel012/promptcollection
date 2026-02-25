@@ -6,7 +6,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const rateLimit = require('express-rate-limit');
-const connectDB = require('./config/db');
+const { connectDB } = require('./config/db');
 const { notFound, errorHandler } = require('./middleware/errorMiddleware');
 
 const authRoutes = require('./routes/authRoutes');
@@ -52,18 +52,34 @@ app.use('/api/', limiter);
 app.use(express.json({ limit: '10mb' })); // Increased for image uploads
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
-app.get('/api/health', (req, res) => {
-    const mongoose = require('mongoose');
+// 4. Critical Health Check - MUST BE BEFORE OTHER ROUTES
+// This helps Render and Vercel verify the service is "LIVE" even during DB congestion
+app.get('/api/health', async (req, res) => {
+    const { pool } = require('./config/db');
+    let dbStatus = 'UNKNOWN';
+    try {
+        await pool.query('SELECT 1');
+        dbStatus = 'CONNECTED';
+    } catch (err) {
+        dbStatus = 'DISCONNECTED';
+    }
+
     res.json({
         status: 'UP',
-        db: mongoose.connection.readyState === 1 ? 'CONNECTED' : 'DISCONNECTED',
-        timestamp: new Date(),
-        origin: req.headers.origin
+        service: 'PROMPT_COLLECTION_API',
+        db: dbStatus,
+        uptime: process.uptime(),
+        timestamp: new Date().toISOString(),
+        node_env: process.env.NODE_ENV,
+        ip_request: req.ip
     });
 });
 
 app.get('/', (req, res) => {
-    res.send('API is running...');
+    res.status(200).json({
+        message: 'PromptCollection API is running',
+        docs: '/api/health'
+    });
 });
 
 // Routes

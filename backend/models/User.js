@@ -1,45 +1,50 @@
-const mongoose = require('mongoose');
+const { pool } = require('../config/db');
 const bcrypt = require('bcryptjs');
 
-const userSchema = mongoose.Schema(
-    {
-        name: {
-            type: String,
-            required: true,
-        },
-        email: {
-            type: String,
-            required: true,
-            unique: true,
-        },
-        password: {
-            type: String,
-            required: true,
-        },
-        isAdmin: {
-            type: Boolean,
-            required: true,
-            default: false,
-        },
-    },
-    {
-        timestamps: true,
-    }
-);
+const User = {
+    findOne: async ({ email }) => {
+        const { rows } = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+        if (rows.length === 0) return null;
 
-userSchema.methods.matchPassword = async function (enteredPassword) {
-    return await bcrypt.compare(enteredPassword, this.password);
+        const user = rows[0];
+        // Normalize fields for controller compatibility
+        return {
+            ...user,
+            _id: user.id,
+            isAdmin: user.is_admin,
+            matchPassword: async function (enteredPassword) {
+                return await bcrypt.compare(enteredPassword, this.password);
+            }
+        };
+    },
+
+    findById: async (id) => {
+        const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+        if (rows.length === 0) return null;
+
+        const user = rows[0];
+        return {
+            ...user,
+            _id: user.id,
+            isAdmin: user.is_admin
+        };
+    },
+
+    create: async ({ name, email, password }) => {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+        const { rows } = await pool.query(
+            'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING *',
+            [name, email, hashedPassword]
+        );
+        const user = rows[0];
+        return {
+            ...user,
+            _id: user.id,
+            isAdmin: user.is_admin
+        };
+    }
 };
 
-userSchema.pre('save', async function (next) {
-    if (!this.isModified('password')) {
-        next();
-    }
-
-    const salt = await bcrypt.genSalt(10);
-    this.password = await bcrypt.hash(this.password, salt);
-});
-
-const User = mongoose.model('User', userSchema);
-
 module.exports = User;
+
