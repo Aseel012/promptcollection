@@ -23,26 +23,41 @@ const Home = () => {
     const [pageNumber, setPageNumber] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
+    const [showJoinedToast, setShowJoinedToast] = useState(false);
+
     useEffect(() => {
         const fetchData = async () => {
-            // Load from cache first for "instant" feel
-            const cachedPrompts = localStorage.getItem('cache_prompts');
-            const cachedCategories = localStorage.getItem('cache_categories');
-            const cachedEngines = localStorage.getItem('cache_engines');
+            setLoading(true);
+            const params = new URLSearchParams(location.search);
+            const searchQuery = params.get('search') || '';
+            const urlCategory = params.get('category') || params.get('chip');
 
-            if (cachedPrompts && pageNumber === 1) setPrompts(JSON.parse(cachedPrompts));
-            if (cachedCategories) setCategories(JSON.parse(cachedCategories));
-            if (cachedEngines) setEngines(JSON.parse(cachedEngines));
+            // Sync activeChip with URL if needed
+            if (urlCategory && activeChip === "All") {
+                setActiveChip(urlCategory);
+            }
+
+            let queryParams = new URLSearchParams();
+            queryParams.append('pageNumber', pageNumber);
+
+            if (searchQuery) queryParams.append('keyword', searchQuery);
+
+            if (activeChip !== "All" && activeChip !== "Recent" && activeChip !== "Liked") {
+                queryParams.append('category', activeChip);
+            } else if (activeChip === "Recent") {
+                if (recentPrompts.length > 0) queryParams.append('ids', recentPrompts.join(','));
+            } else if (activeChip === "Liked") {
+                if (likedPrompts.length > 0) queryParams.append('ids', likedPrompts.join(','));
+            }
 
             try {
                 const [promptRes, catRes, engRes] = await Promise.all([
-                    fetch(`${API_ENDPOINTS.PROMPTS}?pageNumber=${pageNumber}`),
+                    fetch(`${API_ENDPOINTS.PROMPTS}?${queryParams.toString()}`),
                     fetch(API_ENDPOINTS.CATEGORIES),
                     fetch(API_ENDPOINTS.ENGINES),
                 ]);
                 const promptData = await promptRes.json();
 
-                // Handle paginated response: { prompts, page, pages }
                 if (promptData && promptData.prompts) {
                     if (pageNumber === 1) {
                         setPrompts(promptData.prompts);
@@ -51,10 +66,6 @@ const Home = () => {
                         setPrompts(prev => [...prev, ...promptData.prompts]);
                     }
                     setTotalPages(promptData.pages);
-                } else if (Array.isArray(promptData)) {
-                    setPrompts(promptData);
-                    if (pageNumber === 1) localStorage.setItem('cache_prompts', JSON.stringify(promptData));
-                    setTotalPages(1);
                 }
 
                 const catData = await catRes.json();
@@ -70,22 +81,21 @@ const Home = () => {
                 }
             } catch (error) {
                 console.error("Connection error:", error);
-                // Fallback to empty if nothing in cache and first load
-                if (!cachedPrompts) setPrompts([]);
-                if (!cachedCategories) setCategories([]);
             } finally {
                 setLoading(false);
             }
         };
         fetchData();
+    }, [pageNumber, activeChip, location.search, likedPrompts.length, recentPrompts.length]);
 
+    useEffect(() => {
         const storedRecent = JSON.parse(localStorage.getItem('recent_prompts') || '[]');
         setRecentPrompts(storedRecent);
-    }, [pageNumber]);
+    }, []);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
-        const chip = params.get('chip');
+        const chip = params.get('chip') || params.get('category');
         if (chip) setActiveChip(chip);
     }, [location.search]);
 
@@ -137,6 +147,8 @@ const Home = () => {
         try {
             await setDoc(userRef, { isJoined: newJoinedState }, { merge: true });
             setIsJoined(newJoinedState);
+            setShowJoinedToast(true);
+            setTimeout(() => setShowJoinedToast(false), 3000);
         } catch (error) {
             console.error("Error joining hub:", error);
         }
@@ -146,10 +158,9 @@ const Home = () => {
 
     const handleSelectPrompt = (prompt) => {
         setSelectedPrompt(prompt);
-        const updatedRecent = [prompt._id, ...recentPrompts.filter(id => id !== prompt._id)].slice(0, 15);
+        const updatedRecent = [prompt._id, ...recentPrompts.filter(id => id !== prompt._id)].slice(0, 50);
         setRecentPrompts(updatedRecent);
         localStorage.setItem('recent_prompts', JSON.stringify(updatedRecent));
-        // Scroll watch overlay back to top (like YouTube clicking Up Next)
         if (watchContainerRef.current) {
             watchContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
         }
@@ -167,29 +178,15 @@ const Home = () => {
 
     const handleChipClick = (name) => {
         setActiveChip(name);
-        setPageNumber(1); // Reset to page 1 on filter
+        setPageNumber(1);
+        window.history.pushState({}, '', `?chip=${name}`);
     };
 
     // Build chip engine names from DB engines + fallback static
     const engineNames = engines.length > 0 ? engines.map(e => e.name) : ["Midjourney", "DALL-E 3", "Stable Diffusion XL", "Leonardo AI", "Freepik", "Gemini"];
 
-    const filteredPrompts = Array.isArray(prompts) ? prompts.filter(p => {
-        const searchParams = new URLSearchParams(location.search);
-        const searchQuery = searchParams.get('search')?.toLowerCase();
-        if (searchQuery) {
-            return p.title.toLowerCase().includes(searchQuery) ||
-                p.category.toLowerCase().includes(searchQuery) ||
-                p.promptText.toLowerCase().includes(searchQuery);
-        }
-        if (activeChip === "All") return true;
-        if (activeChip === "Recent") return recentPrompts.includes(p._id);
-        if (activeChip === "Liked") return likedPrompts.includes(p._id);
-        return p.category === activeChip || p.aiModel === activeChip;
-    }).sort((a, b) => {
-        if (activeChip === "Recent") return recentPrompts.indexOf(a._id) - recentPrompts.indexOf(b._id);
-        if (activeChip === "All") return new Date(b.createdAt) - new Date(a.createdAt);
-        return 0;
-    }) : [];
+    const filteredPrompts = prompts; // Backend handles filtering now
+
 
     const breakpointColumnsObj = {
         default: 5,
@@ -202,12 +199,22 @@ const Home = () => {
     return (
         <div className="bg-[#0f0f0f] min-h-screen text-white">
 
+            {/* Join Hub Notification */}
+            {showJoinedToast && (
+                <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] bg-white text-black px-6 py-3 rounded-full shadow-2xl flex items-center gap-3 animate-bounce">
+                    <Check size={18} className="text-green-600" />
+                    <span className="font-bold text-sm uppercase tracking-widest">
+                        {isJoined ? 'Welcome to the Prompt Hub!' : 'You left the Hub.'}
+                    </span>
+                </div>
+            )}
+
             {/* YouTube Style Chips */}
             <div className="sticky top-14 z-30 bg-[#0f0f0f]/95 backdrop-blur-md py-3 -mx-4 md:-mx-8 px-4 md:px-8 mb-6 border-b border-white/5 overflow-x-auto no-scrollbar">
                 <div className="flex gap-3 min-w-max pb-1">
-                    <button onClick={() => { setActiveChip("All"); window.history.pushState({}, '', '/'); }} className={`yt-chip ${activeChip === "All" && !location.search ? 'yt-chip-active' : ''}`}>All</button>
-                    <button onClick={() => setActiveChip("Recent")} className={`yt-chip ${activeChip === "Recent" ? 'yt-chip-active' : ''}`}>Recent</button>
-                    {user && <button onClick={() => setActiveChip("Liked")} className={`yt-chip ${activeChip === "Liked" ? 'yt-chip-active' : ''}`}>Liked</button>}
+                    <button onClick={() => { setActiveChip("All"); window.history.pushState({}, '', '/'); }} className={`yt-chip ${activeChip === "All" ? 'yt-chip-active' : ''}`}>All</button>
+                    <button onClick={() => handleChipClick("Recent")} className={`yt-chip ${activeChip === "Recent" ? 'yt-chip-active' : ''}`}>Recent</button>
+                    {user && <button onClick={() => handleChipClick("Liked")} className={`yt-chip ${activeChip === "Liked" ? 'yt-chip-active' : ''}`}>Liked</button>}
                     <div className="w-px h-6 bg-white/10 mx-2 self-center" />
                     {categories.map((cat) => (
                         <button key={cat._id} onClick={() => handleChipClick(cat.name)} className={`yt-chip ${activeChip === cat.name ? 'yt-chip-active' : ''}`}>{cat.name}</button>
@@ -218,6 +225,7 @@ const Home = () => {
                     ))}
                 </div>
             </div>
+
 
             <div className="w-full">
                 {loading ? (

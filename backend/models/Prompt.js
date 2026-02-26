@@ -4,10 +4,27 @@ const Prompt = {
     countDocuments: async (keyword = {}) => {
         let query = 'SELECT COUNT(*) FROM prompts';
         const params = [];
-        if (keyword.title && keyword.title.$regex) {
-            query += ' WHERE title ILIKE $1';
-            params.push(`%${keyword.title.$regex}%`);
+        let paramIndex = 1;
+
+        const clauses = [];
+        if (keyword.searchText) {
+            clauses.push(`(title ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR prompt_text ILIKE $${paramIndex})`);
+            params.push(`%${keyword.searchText}%`);
+            paramIndex++;
         }
+        if (keyword.category) {
+            clauses.push(`category = $${paramIndex++}`);
+            params.push(keyword.category);
+        }
+        if (keyword.ids && Array.isArray(keyword.ids) && keyword.ids.length > 0) {
+            clauses.push(`id = ANY($${paramIndex++})`);
+            params.push(keyword.ids);
+        }
+
+        if (clauses.length > 0) {
+            query += ' WHERE ' + clauses.join(' AND ');
+        }
+
         const { rows } = await pool.query(query, params);
         return parseInt(rows[0].count);
     },
@@ -17,12 +34,23 @@ const Prompt = {
         const params = [];
         let paramIndex = 1;
 
-        if (keyword.title && keyword.title.$regex) {
-            query += ` WHERE title ILIKE $${paramIndex++}`;
-            params.push(`%${keyword.title.$regex}%`);
-        } else if (keyword.category) {
-            query += ` WHERE category = $${paramIndex++}`;
+        const clauses = [];
+        if (keyword.searchText) {
+            clauses.push(`(title ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR prompt_text ILIKE $${paramIndex})`);
+            params.push(`%${keyword.searchText}%`);
+            paramIndex++;
+        }
+        if (keyword.category) {
+            clauses.push(`category = $${paramIndex++}`);
             params.push(keyword.category);
+        }
+        if (keyword.ids && Array.isArray(keyword.ids) && keyword.ids.length > 0) {
+            clauses.push(`id = ANY($${paramIndex++})`);
+            params.push(keyword.ids);
+        }
+
+        if (clauses.length > 0) {
+            query += ' WHERE ' + clauses.join(' AND ');
         }
 
         query += ' ORDER BY created_at DESC';
@@ -95,4 +123,3 @@ const Prompt = {
 };
 
 module.exports = Prompt;
-

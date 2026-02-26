@@ -5,26 +5,38 @@ const Prompt = require('../models/Prompt');
 // @access  Public
 const getPrompts = async (req, res, next) => {
     try {
-        const pageSize = 12; // Standard masonry grid page size
+        const pageSize = 24; // Increased page size for better masonry experience
         const page = Number(req.query.pageNumber) || 1;
-        const keyword = req.query.keyword ? {
-            title: {
-                $regex: req.query.keyword,
-                $options: 'i'
-            }
-        } : {};
+        const { keyword, category, ids } = req.query;
 
-        const count = await Prompt.countDocuments(keyword);
-        const prompts = await Prompt.find(keyword, {
+        const filter = {};
+        if (keyword) {
+            filter.searchText = keyword;
+        }
+        if (category && category !== 'All') {
+            filter.category = category;
+        }
+        if (ids) {
+            filter.ids = ids.split(',');
+        }
+
+        const count = await Prompt.countDocuments(filter);
+        const prompts = await Prompt.find(filter, {
             limit: pageSize,
             skip: pageSize * (page - 1)
         });
 
-        res.json({ prompts, page, pages: Math.ceil(count / pageSize) });
+        res.json({
+            prompts,
+            page,
+            pages: Math.ceil(count / pageSize),
+            count
+        });
     } catch (error) {
         next(error);
     }
 };
+
 
 const getPromptById = async (req, res, next) => {
     try {

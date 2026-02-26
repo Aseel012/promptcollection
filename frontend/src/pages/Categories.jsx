@@ -36,8 +36,9 @@ const Categories = () => {
     }, []);
 
     const handleCategoryClick = (category) => {
-        navigate(`/?category=${category}`);
+        navigate(`/?chip=${category}`);
     };
+
 
     return (
         <div className="pb-20 w-full max-w-[2000px] mx-auto">
