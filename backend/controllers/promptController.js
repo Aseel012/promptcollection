@@ -5,6 +5,11 @@ const Prompt = require('../models/Prompt');
 // @access  Public
 const getPrompts = async (req, res, next) => {
     try {
+        // Set headers to prevent caching for dynamic results
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+        res.setHeader('Pragma', 'no-cache');
+        res.setHeader('Expires', '0');
+
         const pageSize = req.query.pageSize ? Number(req.query.pageSize) : 24;
         const page = Number(req.query.pageNumber) || 1;
         const { keyword, category, ids, shuffle } = req.query;
@@ -23,7 +28,7 @@ const getPrompts = async (req, res, next) => {
         const count = await Prompt.countDocuments(filter);
         const prompts = await Prompt.find(filter, {
             limit: pageSize,
-            skip: pageSize * (page - 1),
+            skip: pageSize > 100 ? 0 : pageSize * (page - 1),
             shuffle: shuffle === 'true'
         });
 

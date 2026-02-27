@@ -68,6 +68,10 @@ const Prompt = {
             params.push(options.skip);
         }
 
+        console.log('--- EXECUTING PROMPT FIND ---');
+        console.log('Query:', query);
+        console.log('Params:', params);
+
         const { rows } = await pool.query(query, params);
         return rows.map(r => ({
             ...r,

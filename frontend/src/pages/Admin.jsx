@@ -345,8 +345,8 @@ const Admin = () => {
                         ) : (
                             prompts.map(p => (
                                 <div key={p._id} className="group relative bg-zinc-900/40 border border-white/5 p-4 rounded-[2.5rem] transition-all hover:bg-zinc-900/60 shadow-lg">
-                                    <div className="aspect-video rounded-[2rem] overflow-hidden mb-5 ring-1 ring-white/10 shadow-inner bg-black">
-                                        <img src={p.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" alt={p.title} />
+                                    <div className="rounded-[2rem] overflow-hidden mb-5 ring-1 ring-white/10 shadow-inner bg-black min-h-[120px]">
+                                        <img src={p.image} className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-700" alt={p.title} />
                                     </div>
                                     <div className="px-2">
                                         <h3 className="font-bold text-white text-base truncate mb-1">{p.title}</h3>

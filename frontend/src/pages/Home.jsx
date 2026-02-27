@@ -28,8 +28,32 @@ const Home = () => {
     const [showJoinedToast, setShowJoinedToast] = useState(false);
 
     useEffect(() => {
+        const fetchMetadata = async () => {
+            try {
+                const [catRes, engRes] = await Promise.all([
+                    fetch(API_ENDPOINTS.CATEGORIES, { headers: { 'Cache-Control': 'no-cache' } }),
+                    fetch(API_ENDPOINTS.ENGINES, { headers: { 'Cache-Control': 'no-cache' } }),
+                ]);
+                const catData = await catRes.json();
+                if (Array.isArray(catData)) {
+                    setCategories(catData);
+                    localStorage.setItem('cache_categories', JSON.stringify(catData));
+                }
+                const engData = await engRes.json();
+                if (Array.isArray(engData)) {
+                    setEngines(engData);
+                    localStorage.setItem('cache_engines', JSON.stringify(engData));
+                }
+            } catch (error) {
+                console.error("Error fetching metadata:", error);
+            }
+        };
+        fetchMetadata();
+    }, []);
+
+    useEffect(() => {
         const fetchData = async () => {
-            setLoading(true);
+            if (pageNumber === 1) setLoading(true);
             const params = new URLSearchParams(location.search);
             const searchQuery = params.get('search') || '';
             const urlCategory = params.get('category') || params.get('chip');
@@ -47,20 +71,20 @@ const Home = () => {
             if (activeChip !== "All" && activeChip !== "Recent" && activeChip !== "Liked") {
                 queryParams.append('category', activeChip);
                 queryParams.append('shuffle', 'true');
+                queryParams.append('t', Date.now());
             } else if (activeChip === "Recent") {
                 if (recentPrompts.length > 0) queryParams.append('ids', recentPrompts.join(','));
             } else if (activeChip === "Liked") {
                 if (likedPrompts.length > 0) queryParams.append('ids', likedPrompts.join(','));
             } else if (activeChip === "All") {
                 queryParams.append('shuffle', 'true');
+                queryParams.append('t', Date.now());
             }
 
             try {
-                const [promptRes, catRes, engRes] = await Promise.all([
-                    fetch(`${API_ENDPOINTS.PROMPTS}?${queryParams.toString()}`),
-                    fetch(API_ENDPOINTS.CATEGORIES),
-                    fetch(API_ENDPOINTS.ENGINES),
-                ]);
+                const promptRes = await fetch(`${API_ENDPOINTS.PROMPTS}?${queryParams.toString()}`, {
+                    headers: { 'Cache-Control': 'no-cache' }
+                });
                 const promptData = await promptRes.json();
 
                 if (promptData && promptData.prompts) {
@@ -69,25 +93,12 @@ const Home = () => {
                         localStorage.setItem('cache_prompts', JSON.stringify(promptData.prompts));
                     } else {
                         setPrompts(prev => {
-                            // Prevent duplicates
                             const existingIds = prev.map(p => p._id);
                             const newPrompts = promptData.prompts.filter(p => !existingIds.includes(p._id));
                             return [...prev, ...newPrompts];
                         });
                     }
                     setTotalPages(promptData.pages);
-                }
-
-                const catData = await catRes.json();
-                if (Array.isArray(catData)) {
-                    setCategories(catData);
-                    localStorage.setItem('cache_categories', JSON.stringify(catData));
-                }
-
-                const engData = await engRes.json();
-                if (Array.isArray(engData)) {
-                    setEngines(engData);
-                    localStorage.setItem('cache_engines', JSON.stringify(engData));
                 }
             } catch (error) {
                 console.error("Connection error:", error);
@@ -113,7 +124,7 @@ const Home = () => {
     useEffect(() => {
         const fetchSuggestions = async () => {
             try {
-                const res = await fetch(`${API_ENDPOINTS.PROMPTS}?pageSize=20&shuffle=true`);
+                const res = await fetch(`${API_ENDPOINTS.PROMPTS}?pageSize=20&shuffle=true&t=${Date.now()}`);
                 const data = await res.json();
                 if (data && data.prompts) {
                     setSuggestions(data.prompts);
@@ -250,14 +261,25 @@ const Home = () => {
             {/* YouTube Style Chips */}
             <div className="sticky top-14 z-30 bg-[#0f0f0f]/95 backdrop-blur-md py-3 -mx-4 md:-mx-8 px-4 md:px-8 mb-6 border-b border-white/5 overflow-x-auto no-scrollbar">
                 <div className="flex gap-3 min-w-max pb-1">
-                    <button onClick={() => { setActiveChip("All"); window.history.pushState({}, '', '/'); }} className={`yt-chip ${activeChip === "All" ? 'yt-chip-active' : ''}`}>All</button>
+                    <button
+                        onClick={() => {
+                            setActiveChip("All");
+                            setPageNumber(1);
+                            window.history.pushState({}, '', '/');
+                        }}
+                        className={`yt-chip ${activeChip === "All" ? 'yt-chip-active' : ''}`}
+                    >
+                        All
+                    </button>
                     <button onClick={() => handleChipClick("Recent")} className={`yt-chip ${activeChip === "Recent" ? 'yt-chip-active' : ''}`}>Recent</button>
                     {user && <button onClick={() => handleChipClick("Liked")} className={`yt-chip ${activeChip === "Liked" ? 'yt-chip-active' : ''}`}>Liked</button>}
-                    <div className="w-px h-6 bg-white/10 mx-2 self-center" />
+
+                    {categories.length > 0 && <div className="w-px h-6 bg-white/10 mx-2 self-center" />}
                     {categories.map((cat) => (
                         <button key={cat._id} onClick={() => handleChipClick(cat.name)} className={`yt-chip ${activeChip === cat.name ? 'yt-chip-active' : ''}`}>{cat.name}</button>
                     ))}
-                    <div className="w-px h-6 bg-white/10 mx-2 self-center" />
+
+                    {engineNames.length > 0 && <div className="w-px h-6 bg-white/10 mx-2 self-center" />}
                     {engineNames.map((model) => (
                         <button key={model} onClick={() => handleChipClick(model)} className={`yt-chip ${activeChip === model ? 'yt-chip-active' : ''}`}>{model}</button>
                     ))}
@@ -267,10 +289,14 @@ const Home = () => {
 
             <div className="w-full">
                 {loading ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-y-10 gap-x-4 px-4">
+                    <Masonry
+                        breakpointCols={breakpointColumnsObj}
+                        className="my-masonry-grid px-4"
+                        columnClassName="my-masonry-grid_column"
+                    >
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
-                            <div key={i} className="animate-pulse flex flex-col gap-3">
-                                <div className="bg-zinc-800 aspect-video rounded-xl w-full" />
+                            <div key={i} className="animate-pulse flex flex-col gap-3 mb-8 px-2">
+                                <div className="bg-zinc-800 rounded-xl w-full" style={{ height: `${200 + (i % 3) * 100}px` }} />
                                 <div className="flex gap-3">
                                     <div className="w-9 h-9 bg-zinc-800 rounded-full" />
                                     <div className="flex-1 space-y-2">
@@ -280,7 +306,7 @@ const Home = () => {
                                 </div>
                             </div>
                         ))}
-                    </div>
+                    </Masonry>
                 ) : filteredPrompts.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-40 text-center px-4">
                         <AlertCircle size={64} className="text-zinc-700 mb-6" />

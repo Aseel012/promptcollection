@@ -74,14 +74,14 @@ const Categories = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.05, type: 'spring', damping: 25 }}
                             onClick={() => handleCategoryClick(cat.name)}
-                            className="group relative bg-[#151515] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-white/20 transition-all shadow-2xl h-64 md:h-80 lg:h-96"
+                            className="group relative bg-[#151515] rounded-[2rem] md:rounded-[2.5rem] overflow-hidden cursor-pointer border border-white/5 hover:border-white/20 transition-all shadow-2xl min-h-[16rem]"
                         >
                             <div className="absolute inset-0 z-0">
                                 <img src={cat.image} alt="" className="w-full h-full object-cover opacity-50 md:opacity-40 group-hover:scale-110 transition-transform duration-1000" />
                                 <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
                             </div>
 
-                            <div className="relative z-10 h-full p-6 md:p-8 flex flex-col justify-end">
+                            <div className="relative z-10 h-full p-6 md:p-8 flex flex-col justify-end min-h-[16rem]">
                                 <div className="flex items-end justify-between">
                                     <div className="flex-1 min-w-0 pr-4">
                                         <h3 className="text-2xl md:text-3xl font-black text-white italic tracking-tighter truncate uppercase mb-1">
