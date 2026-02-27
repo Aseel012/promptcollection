@@ -53,7 +53,11 @@ const Prompt = {
             query += ' WHERE ' + clauses.join(' AND ');
         }
 
-        query += ' ORDER BY created_at DESC';
+        if (options.shuffle) {
+            query += ' ORDER BY RANDOM()';
+        } else {
+            query += ' ORDER BY created_at DESC';
+        }
 
         if (options.limit) {
             query += ` LIMIT $${paramIndex++}`;

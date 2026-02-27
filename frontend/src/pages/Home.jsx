@@ -22,6 +22,8 @@ const Home = () => {
     const [isJoined, setIsJoined] = useState(false);
     const [pageNumber, setPageNumber] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [suggestions, setSuggestions] = useState([]);
+    const observer = useRef();
 
     const [showJoinedToast, setShowJoinedToast] = useState(false);
 
@@ -44,10 +46,13 @@ const Home = () => {
 
             if (activeChip !== "All" && activeChip !== "Recent" && activeChip !== "Liked") {
                 queryParams.append('category', activeChip);
+                queryParams.append('shuffle', 'true');
             } else if (activeChip === "Recent") {
                 if (recentPrompts.length > 0) queryParams.append('ids', recentPrompts.join(','));
             } else if (activeChip === "Liked") {
                 if (likedPrompts.length > 0) queryParams.append('ids', likedPrompts.join(','));
+            } else if (activeChip === "All") {
+                queryParams.append('shuffle', 'true');
             }
 
             try {
@@ -63,7 +68,12 @@ const Home = () => {
                         setPrompts(promptData.prompts);
                         localStorage.setItem('cache_prompts', JSON.stringify(promptData.prompts));
                     } else {
-                        setPrompts(prev => [...prev, ...promptData.prompts]);
+                        setPrompts(prev => {
+                            // Prevent duplicates
+                            const existingIds = prev.map(p => p._id);
+                            const newPrompts = promptData.prompts.filter(p => !existingIds.includes(p._id));
+                            return [...prev, ...newPrompts];
+                        });
                     }
                     setTotalPages(promptData.pages);
                 }
@@ -99,6 +109,22 @@ const Home = () => {
         if (chip) setActiveChip(chip);
     }, [location.search]);
 
+    // Fetch shuffled suggestions for "Up Next"
+    useEffect(() => {
+        const fetchSuggestions = async () => {
+            try {
+                const res = await fetch(`${API_ENDPOINTS.PROMPTS}?pageSize=20&shuffle=true`);
+                const data = await res.json();
+                if (data && data.prompts) {
+                    setSuggestions(data.prompts);
+                }
+            } catch (error) {
+                console.error("Error fetching suggestions:", error);
+            }
+        };
+        fetchSuggestions();
+    }, [selectedPrompt?._id]);
+
     useEffect(() => {
         if (user) {
             const fetchUserData = async () => {
@@ -112,6 +138,18 @@ const Home = () => {
             fetchUserData();
         }
     }, [user]);
+
+    // Infinite Scroll Observer
+    const lastPromptElementRef = (node) => {
+        if (loading) return;
+        if (observer.current) observer.current.disconnect();
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && pageNumber < totalPages) {
+                setPageNumber(prev => prev + 1);
+            }
+        });
+        if (node) observer.current.observe(node);
+    };
 
     // Lock body scroll when watch page is open
     useEffect(() => {
@@ -256,8 +294,13 @@ const Home = () => {
                         className="my-masonry-grid"
                         columnClassName="my-masonry-grid_column"
                     >
-                        {filteredPrompts.map((item) => (
-                            <div key={item._id} onClick={() => handleSelectPrompt(item)} className="mb-8 cursor-pointer group px-2">
+                        {filteredPrompts.map((item, index) => (
+                            <div
+                                key={item._id}
+                                ref={filteredPrompts.length === index + 1 ? lastPromptElementRef : null}
+                                onClick={() => handleSelectPrompt(item)}
+                                className="mb-8 cursor-pointer group px-2"
+                            >
                                 <div className="relative overflow-hidden rounded-2xl bg-zinc-900 border border-white/5 mb-3">
                                     <img
                                         src={item.image}
@@ -291,15 +334,10 @@ const Home = () => {
                     </Masonry>
                 )}
 
-                {/* Pagination Controls */}
-                {!loading && pageNumber < totalPages && (
-                    <div className="flex justify-center py-10">
-                        <button
-                            onClick={() => setPageNumber(prev => prev + 1)}
-                            className="px-8 py-3 bg-zinc-900 border border-white/10 rounded-full text-sm font-bold uppercase tracking-widest hover:bg-zinc-800 transition-colors"
-                        >
-                            Load More Prompts
-                        </button>
+                {/* Loading Indicator for Infinite Scroll */}
+                {loading && pageNumber > 1 && (
+                    <div className="flex justify-center py-6 text-zinc-500 font-bold uppercase tracking-widest animate-pulse">
+                        Loading more assets...
                     </div>
                 )}
             </div>
@@ -413,7 +451,7 @@ const Home = () => {
                         <div className="w-full lg:w-[400px] px-4 lg:px-0 flex-shrink-0">
                             <h3 className="text-sm font-semibold text-zinc-400 mb-4">Up next</h3>
                             <div className="space-y-4">
-                                {prompts.filter(p => p._id !== selectedPrompt._id).slice(0, 15).map(rec => (
+                                {suggestions.filter(p => p._id !== selectedPrompt._id).map(rec => (
                                     <div
                                         key={rec._id}
                                         onClick={() => handleSelectPrompt(rec)}

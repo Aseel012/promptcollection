@@ -64,7 +64,7 @@ const Admin = () => {
             }
 
             const [promptRes, catRes, engRes] = await Promise.all([
-                fetch(API_ENDPOINTS.PROMPTS),
+                fetch(`${API_ENDPOINTS.PROMPTS}?pageSize=1000`),
                 fetch(API_ENDPOINTS.CATEGORIES),
                 fetch(API_ENDPOINTS.ENGINES),
             ]);
