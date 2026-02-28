@@ -1,7 +1,20 @@
-require('dotenv').config({ path: '../.env' });
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../.env') });
 const { Pool } = require('pg');
-const admin = require('../config/firebaseAdmin');
+const { initializeApp, cert } = require('firebase-admin/app');
 const { getStorage } = require('firebase-admin/storage');
+
+let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
+privateKey = privateKey.replace(/^"(.*)"$/, '$1').replace(/\\n/g, '\n');
+
+initializeApp({
+    credential: cert({
+        projectId: process.env.FIREBASE_PROJECT_ID,
+        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+        privateKey: privateKey
+    }),
+    storageBucket: 'promptlib-56d93.firebasestorage.app'
+});
 const fs = require('fs');
 
 let logOut = '';
@@ -11,14 +24,14 @@ function log(msg) {
 }
 
 const pool = new Pool({
-    connectionString: process.env.INSFORGE_POSTGRES_URL || 'postgresql://postgres:dc364af68ff3b138ba069d9119a25b55@6sbeyxbq.us-east.database.insforge.app:5432/insforge?sslmode=require',
+    connectionString: process.env.INSFORGE_POSTGRES_URL,
     max: 10,
     idleTimeoutMillis: 30000
 });
 
 async function uploadBase64(base64String, folder, filename) {
     const bucket = getStorage().bucket();
-    const matches = base64String.match(/^data:(image\\/\\w +); base64, (.+)$ /);
+    const matches = base64String.match(new RegExp('^data:(image/[a-zA-Z0-9]+);base64,(.+)$'));
     if (!matches || matches.length !== 3) {
         throw new Error('Invalid Base64 string format');
     }

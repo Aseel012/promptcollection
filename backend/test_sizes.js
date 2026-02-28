@@ -3,7 +3,7 @@ const fs = require('fs');
 
 async function checkSizes() {
     const client = new Client({
-        connectionString: 'postgresql://postgres:dc364af68ff3b138ba069d9119a25b55@6sbeyxbq.us-east.database.insforge.app:5432/insforge?sslmode=require'
+        connectionString: process.env.INSFORGE_POSTGRES_URL
     });
 
     try {

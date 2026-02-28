@@ -4,38 +4,20 @@ const fs = require('fs');
 
 let serviceAccount;
 
-// 1. Try to load from local JSON file first (Robust for Local Dev)
-const localPath = path.join(__dirname, 'serviceAccountKey.json');
-if (fs.existsSync(localPath)) {
-    console.log('📦 Loading Firebase Credentials from local JSON file...');
-    serviceAccount = require(localPath);
-} else {
-    // 2. Fallback to Environment Variables (For Render / Production)
-    console.log('🌐 Loading Firebase Credentials from environment variables...');
+// Force Environment Variables (For Render / Production)
+console.log('🌐 Loading Firebase Credentials from environment variables...');
 
-    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
-    if (privateKey) {
-        // Remove quotes and handle escaped newlines
-        privateKey = privateKey.replace(/^"(.*)"$/, '$1').replace(/\\n/g, '\n');
-
-        const header = '-----BEGIN PRIVATE KEY-----';
-        const footer = '-----END PRIVATE KEY-----';
-
-        // Only add header/footer if absolutely missing
-        if (!privateKey.includes(header)) privateKey = `${header}\n${privateKey}`;
-        if (!privateKey.includes(footer)) privateKey = `${privateKey}\n${footer}`;
-
-        // Final trim to ensure no trailing junk
-        privateKey = privateKey.trim();
-    }
-
-    serviceAccount = {
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: privateKey,
-    };
+// dotenv correctly strips quotes, but leaves escaped newlines depending on format
+let privateKey = process.env.FIREBASE_PRIVATE_KEY || '';
+if (privateKey.includes('\\n')) {
+    privateKey = privateKey.replace(/\\n/g, '\\n');
 }
 
+serviceAccount = {
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    privateKey: privateKey,
+};
 // Final Validation
 if (!serviceAccount.privateKey) {
     console.error('❌ FIREBASE_PRIVATE_KEY is missing or invalid!');

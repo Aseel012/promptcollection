@@ -2,7 +2,7 @@ const { pool } = require('../config/db');
 
 const Category = {
     find: async () => {
-        const { rows } = await pool.query('SELECT * FROM categories ORDER BY name ASC');
+        const { rows } = await pool.query('SELECT id, name, description, created_at, updated_at FROM categories ORDER BY name ASC');
         return rows.map(r => ({ ...r, _id: r.id }));
     },
 

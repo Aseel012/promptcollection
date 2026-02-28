@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,23 +6,25 @@
 
 @layer base {
   body {
-    background-color: #0f0f0f;
-    color: #ffffff;
-    @apply antialiased;
+    background-color: theme('colors.background');
+    color: theme('colors.foreground');
+    @apply antialiased selection:bg-accent selection:text-white;
     font-family: 'Inter', sans-serif;
-    font-weight: 400;
   }
 
   h1,
   h2,
   h3,
-  h4 {
-    @apply font-semibold tracking-tight text-white;
+  h4,
+  h5,
+  h6 {
+    font-family: 'Inter', sans-serif;
+    @apply font-bold tracking-tight;
   }
 
-  /* YT Style Scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -30,34 +32,58 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: #333333;
+    background: theme('colors.border');
     border-radius: 10px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #444444;
+    background: theme('colors.muted');
   }
 }
 
 @layer components {
-  .yt-card {
-    @apply flex flex-col gap-3 cursor-pointer transition-all duration-300;
+
+  /* Precision Card */
+  .glass-card {
+    @apply bg-card border border-border rounded-lg transition-all duration-200 hover:bg-cardHighlight hover:border-muted/40 relative overflow-hidden;
   }
 
-  .yt-input {
-    @apply bg-zinc-900 border border-white/10 rounded-full px-6 py-3 text-white focus:border-white focus:outline-none transition-all placeholder:text-zinc-500 text-sm;
+  /* Inputs & Buttons */
+  .styled-input {
+    @apply bg-card border border-border rounded-md px-4 py-2.5 text-foreground focus:border-foreground/40 outline-none transition-all placeholder:text-muted/50 w-full text-sm;
   }
 
-  /* YouTube-style chip — normal weight, no uppercase */
-  .yt-chip {
-    @apply px-4 py-1.5 bg-zinc-800 hover:bg-zinc-700 rounded-lg text-sm font-medium transition-all whitespace-nowrap;
+  .styled-button {
+    @apply px-4 py-2 bg-foreground text-background font-medium rounded-md hover:bg-white/90 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm;
   }
 
-  .yt-chip-active {
-    @apply bg-white text-black font-semibold hover:bg-zinc-200;
+  .styled-button-outline {
+    @apply px-4 py-2 border border-border text-foreground font-medium rounded-md hover:bg-cardHighlight transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm;
   }
 
-  /* Masonry Grid Styles */
+  .styled-button-accent {
+    @apply px-4 py-2 bg-foreground text-background font-bold rounded-md hover:bg-white/90 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm;
+  }
+
+  /* High Precision Tags */
+  .glass-tag {
+    @apply px-2.5 py-1 bg-card border border-border rounded-md text-[11px] font-semibold text-muted hover:text-foreground hover:border-muted/40 transition-all whitespace-nowrap cursor-pointer uppercase tracking-wider;
+  }
+
+  .glass-tag-active {
+    @apply bg-foreground text-background border-foreground hover:bg-foreground/90;
+  }
+
+  /* Layout Utilities */
+  .page-container {
+    @apply max-w-[1400px] mx-auto px-6 md:px-12 w-full pt-28 pb-20;
+  }
+
+  .hero-gradient {
+    background: radial-gradient(circle at top center, rgba(59, 130, 246, 0.15) 0%, transparent 60%);
+  }
+
+  /* Masonry */
   .my-masonry-grid {
     display: flex;
     margin-left: -24px;
@@ -73,7 +99,6 @@
     margin-bottom: 24px;
   }
 
-  /* Hide scrollbar but keep scroll functionality */
   .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;

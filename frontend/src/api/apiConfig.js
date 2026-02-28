@@ -63,7 +63,8 @@ function shuffleArray(arr) {
 // ─── API Functions ───────────────────────────────────────────
 
 export async function fetchPrompts({ pageNumber = 1, pageSize = 8, keyword, category, ids, shuffle } = {}) {
-    let url = `${INSFORGE_BASE_URL}/api/database/records/prompts?limit=${pageSize}&offset=${(pageNumber - 1) * pageSize}`;
+    const listSelectFields = 'id,user_id,title,description,prompt_text,tags,category,ai_model,created_at,updated_at';
+    let url = `${INSFORGE_BASE_URL}/api/database/records/prompts?select=${listSelectFields}&limit=${pageSize}&offset=${(pageNumber - 1) * pageSize}`;
 
     if (category && category !== 'All') {
         url += `&category=eq.${encodeURIComponent(category)}`;

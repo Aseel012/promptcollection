@@ -71,17 +71,17 @@ const Navbar = ({ toggleSidebar }) => {
     };
 
     return (
-        <nav className="fixed top-0 left-0 right-0 z-[60] bg-[#0f0f0f] px-2 md:px-4 h-14 flex items-center justify-between border-b border-white/5">
+        <nav className="fixed top-0 left-0 right-0 z-[60] bg-background px-6 h-14 flex items-center justify-between border-b border-border shadow-md">
 
             {/* Mobile Search Overlay */}
             {isSearchOpen && (
-                <div className="absolute inset-0 bg-[#0f0f0f] z-[70] flex items-center px-2 gap-2 lg:hidden">
-                    <button onClick={() => setIsSearchOpen(false)} className="p-2">
-                        <X size={24} />
+                <div className="absolute inset-0 bg-background z-[70] flex items-center px-4 gap-4 lg:hidden">
+                    <button onClick={() => setIsSearchOpen(false)} className="p-1 hover:bg-cardHighlight rounded-md">
+                        <X size={20} />
                     </button>
                     <form
                         onSubmit={(e) => { e.preventDefault(); setIsSearchOpen(false); navigate(`/?search=${search}`); }}
-                        className="flex-1 flex items-center bg-zinc-900 rounded-full px-4 py-1.5 border border-zinc-700"
+                        className="flex-1 flex items-center bg-card rounded-md px-3 py-1.5 border border-border"
                     >
                         <input
                             autoFocus
@@ -96,30 +96,29 @@ const Navbar = ({ toggleSidebar }) => {
             )}
 
             {/* Left */}
-            <div className="flex items-center gap-1 md:gap-4 ml-2">
-                <button onClick={toggleSidebar} className="p-2 hover:bg-zinc-800 rounded-full transition-colors">
-                    <Menu size={20} />
+            <div className="flex items-center gap-6">
+                <button onClick={toggleSidebar} className="p-1.5 hover:bg-cardHighlight rounded-md transition-colors">
+                    <Menu size={18} />
                 </button>
-                <Link to="/" className="flex items-center gap-2 font-black text-xl md:text-2xl tracking-tighter uppercase">
-                    <span className="text-white">Promptcollection<span className="text-red-600">.</span></span>
+                <Link to="/" className="flex items-center gap-2 font-bold text-lg tracking-tight">
+                    <span className="text-foreground">Promptcollection</span>
                 </Link>
             </div>
 
-            {/* Center - Desktop Search */}
             <form
                 onSubmit={(e) => { e.preventDefault(); navigate(`/?search=${search}`); }}
-                className="hidden lg:flex items-center flex-1 max-w-[720px] mx-10"
+                className="hidden lg:flex items-center flex-1 max-w-[640px] mx-10"
             >
-                <div className="flex flex-1 items-center bg-zinc-900 border border-zinc-700/50 rounded-full overflow-hidden focus-within:border-zinc-500 focus-within:bg-zinc-950 transition-all">
+                <div className="flex flex-1 items-center bg-card border border-border rounded-md overflow-hidden focus-within:border-foreground/20 transition-all shadow-sm">
                     <input
                         type="text"
                         placeholder="Search prompts..."
-                        className="bg-transparent px-5 py-2 w-full outline-none text-white placeholder:text-zinc-500 text-sm"
+                        className="bg-transparent px-4 py-1.5 w-full outline-none text-foreground placeholder:text-muted/50 text-sm"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                     />
-                    <button type="submit" className="bg-zinc-800 border-l border-zinc-700 px-5 py-2 hover:bg-zinc-700 transition-colors">
-                        <Search size={18} className="text-zinc-400" />
+                    <button type="submit" className="bg-cardHighlight border-l border-border px-4 py-1.5 hover:bg-white/5 transition-colors">
+                        <Search size={16} className="text-muted" />
                     </button>
                 </div>
             </form>
@@ -152,7 +151,7 @@ const Navbar = ({ toggleSidebar }) => {
 
                                 {/* Notification Panel */}
                                 {notifOpen && (
-                                    <div className="absolute right-0 mt-2 w-96 bg-[#212121] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[80]">
+                                    <div className="absolute right-0 mt-3 w-80 bg-card border border-border rounded-lg shadow-2xl overflow-hidden z-[80] animate-fade-in">
                                         {/* Panel Header */}
                                         <div className="flex items-center justify-between px-5 py-4 border-b border-white/5">
                                             <h3 className="text-base font-semibold">Notifications</h3>
@@ -233,7 +232,7 @@ const Navbar = ({ toggleSidebar }) => {
                                     </div>
                                 )}
                             </button>
-                            <div className="absolute right-0 mt-2 w-56 md:w-64 bg-zinc-900 shadow-2xl rounded-xl border border-white/10 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all py-2 z-[70]">
+                            <div className="absolute right-0 mt-3 w-56 md:w-64 bg-card shadow-2xl rounded-lg border border-border opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-1.5 z-[70] transform group-hover:translate-y-0 translate-y-1">
                                 <div className="px-4 md:px-5 py-4 border-b border-white/5">
                                     <p className="text-sm font-semibold truncate">{user.displayName || user.email}</p>
                                     <p className="text-xs text-zinc-400 mt-0.5 truncate">@{user.email.split('@')[0]}</p>
@@ -258,8 +257,8 @@ const Navbar = ({ toggleSidebar }) => {
                         </div>
                     </>
                 ) : (
-                    <Link to="/login" className="flex items-center gap-1 md:gap-2 px-3 py-1.5 border border-zinc-700 rounded-full hover:bg-white/5 hover:border-zinc-500 transition-all text-white text-sm font-medium whitespace-nowrap">
-                        <UserIcon size={18} />
+                    <Link to="/login" className="flex items-center gap-2 px-4 py-1.5 border border-border rounded-md hover:bg-cardHighlight transition-all text-foreground text-xs font-semibold whitespace-nowrap bg-card">
+                        <UserIcon size={14} />
                         <span className="hidden xs:block">Sign in</span>
                     </Link>
                 )}

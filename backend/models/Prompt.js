@@ -30,7 +30,7 @@ const Prompt = {
     },
 
     find: async (keyword = {}, options = {}) => {
-        let query = 'SELECT * FROM prompts';
+        let query = 'SELECT id, user_id, title, description, prompt_text, tags, category, ai_model, created_at, updated_at FROM prompts';
         const params = [];
         let paramIndex = 1;
 

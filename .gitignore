@@ -13,3 +13,9 @@ backend/config/serviceAccountKey.json
 
 # build
 dist
+
+# logs and local test files
+*.log
+*.txt
+backend/test_sizes.js
+backend/scripts/test_*.js

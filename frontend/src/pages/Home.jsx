@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import Masonry from 'react-masonry-css';
-import { fetchPrompts, fetchCategories, fetchEngines } from '../api/apiConfig';
+import { fetchPrompts, fetchCategories, fetchEngines, fetchPromptById } from '../api/apiConfig';
 
 const Home = () => {
     const { user } = useAuth();
@@ -14,6 +14,7 @@ const Home = () => {
     const [categories, setCategories] = useState([]);
     const [engines, setEngines] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [fetchingDetails, setFetchingDetails] = useState(false);
     const [selectedPrompt, setSelectedPrompt] = useState(null);
     const [copiedId, setCopiedId] = useState(null);
     const [activeChip, setActiveChip] = useState("All");
@@ -194,13 +195,21 @@ const Home = () => {
 
     const watchContainerRef = useRef(null);
 
-    const handleSelectPrompt = (prompt) => {
-        setSelectedPrompt(prompt);
-        const updatedRecent = [prompt._id, ...recentPrompts.filter(id => id !== prompt._id)].slice(0, 50);
-        setRecentPrompts(updatedRecent);
-        localStorage.setItem('recent_prompts', JSON.stringify(updatedRecent));
-        if (watchContainerRef.current) {
-            watchContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+    const handleSelectPrompt = async (prompt) => {
+        setFetchingDetails(true);
+        try {
+            const fullPrompt = await fetchPromptById(prompt._id);
+            setSelectedPrompt(fullPrompt);
+            const updatedRecent = [prompt._id, ...recentPrompts.filter(id => id !== prompt._id)].slice(0, 50);
+            setRecentPrompts(updatedRecent);
+            localStorage.setItem('recent_prompts', JSON.stringify(updatedRecent));
+            if (watchContainerRef.current) {
+                watchContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        } catch (e) {
+            console.error("Failed to fetch full prompt details:", e);
+        } finally {
+            setFetchingDetails(false);
         }
     };
 
@@ -235,7 +244,7 @@ const Home = () => {
     };
 
     return (
-        <div className="bg-[#0f0f0f] min-h-screen text-white">
+        <div className="bg-background min-h-screen text-foreground">
 
             {/* Join Hub Notification */}
             {showJoinedToast && (
@@ -247,30 +256,37 @@ const Home = () => {
                 </div>
             )}
 
-            {/* YouTube Style Chips */}
-            <div className="sticky top-14 z-30 bg-[#0f0f0f]/95 backdrop-blur-md py-3 -mx-4 md:-mx-8 px-4 md:px-8 mb-6 border-b border-white/5 overflow-x-auto no-scrollbar">
-                <div className="flex gap-3 min-w-max pb-1">
+            {/* Loading Overlay when fetching full prompt */}
+            {fetchingDetails && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-accent"></div>
+                </div>
+            )}
+
+            {/* Precision Filter Chips */}
+            <div className="sticky top-14 z-30 bg-background/90 backdrop-blur-md py-3 -mx-4 md:-mx-8 px-4 md:px-8 mb-6 border-b border-border shadow-sm overflow-x-auto no-scrollbar">
+                <div className="flex gap-2 min-w-max pb-1">
                     <button
                         onClick={() => {
                             setActiveChip("All");
                             setPageNumber(1);
                             window.history.pushState({}, '', '/');
                         }}
-                        className={`yt-chip ${activeChip === "All" ? 'yt-chip-active' : ''}`}
+                        className={`glass-tag ${activeChip === "All" ? 'glass-tag-active' : ''}`}
                     >
-                        All
+                        Index
                     </button>
-                    <button onClick={() => handleChipClick("Recent")} className={`yt-chip ${activeChip === "Recent" ? 'yt-chip-active' : ''}`}>Recent</button>
-                    {user && <button onClick={() => handleChipClick("Liked")} className={`yt-chip ${activeChip === "Liked" ? 'yt-chip-active' : ''}`}>Liked</button>}
+                    <button onClick={() => handleChipClick("Recent")} className={`glass-tag ${activeChip === "Recent" ? 'glass-tag-active' : ''}`}>Recent</button>
+                    {user && <button onClick={() => handleChipClick("Liked")} className={`glass-tag ${activeChip === "Liked" ? 'glass-tag-active' : ''}`}>Liked</button>}
 
-                    {categories.length > 0 && <div className="w-px h-6 bg-white/10 mx-2 self-center" />}
+                    {categories.length > 0 && <div className="w-px h-4 bg-border mx-2 self-center" />}
                     {categories.map((cat) => (
-                        <button key={cat._id} onClick={() => handleChipClick(cat.name)} className={`yt-chip ${activeChip === cat.name ? 'yt-chip-active' : ''}`}>{cat.name}</button>
+                        <button key={cat._id} onClick={() => handleChipClick(cat.name)} className={`glass-tag ${activeChip === cat.name ? 'glass-tag-active' : ''}`}>{cat.name}</button>
                     ))}
 
-                    {engineNames.length > 0 && <div className="w-px h-6 bg-white/10 mx-2 self-center" />}
+                    {engineNames.length > 0 && <div className="w-px h-4 bg-border mx-2 self-center" />}
                     {engineNames.map((model) => (
-                        <button key={model} onClick={() => handleChipClick(model)} className={`yt-chip ${activeChip === model ? 'yt-chip-active' : ''}`}>{model}</button>
+                        <button key={model} onClick={() => handleChipClick(model)} className={`glass-tag ${activeChip === model ? 'glass-tag-active' : ''}`}>{model}</button>
                     ))}
                 </div>
             </div>
@@ -284,14 +300,11 @@ const Home = () => {
                         columnClassName="my-masonry-grid_column"
                     >
                         {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
-                            <div key={i} className="animate-pulse flex flex-col gap-3 mb-8 px-2">
-                                <div className="bg-zinc-800 rounded-xl w-full" style={{ height: `${200 + (i % 3) * 100}px` }} />
-                                <div className="flex gap-3">
-                                    <div className="w-9 h-9 bg-zinc-800 rounded-full" />
-                                    <div className="flex-1 space-y-2">
-                                        <div className="h-4 bg-zinc-800 rounded w-full" />
-                                        <div className="h-3 bg-zinc-800 rounded w-2/3" />
-                                    </div>
+                            <div key={i} className="animate-pulse flex flex-col gap-4 mb-6 px-2">
+                                <div className="glass-card w-full p-6 space-y-4" style={{ height: `${160 + (i % 3) * 40}px` }}>
+                                    <div className="h-5 bg-cardHighlight rounded w-3/4" />
+                                    <div className="h-4 bg-cardHighlight rounded w-full" />
+                                    <div className="h-4 bg-cardHighlight rounded w-5/6" />
                                 </div>
                             </div>
                         ))}
@@ -314,33 +327,36 @@ const Home = () => {
                                 key={item._id}
                                 ref={filteredPrompts.length === index + 1 ? lastPromptElementRef : null}
                                 onClick={() => handleSelectPrompt(item)}
-                                className="mb-8 cursor-pointer group px-2"
+                                className="mb-6 cursor-pointer group px-2 animate-slide-up"
+                                style={{ animationDelay: `${(index % 10) * 50}ms` }}
                             >
-                                <div className="relative overflow-hidden rounded-2xl bg-zinc-900 border border-white/5 mb-3">
-                                    <img
-                                        src={item.image}
-                                        alt={item.title}
-                                        className="w-full h-auto object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                                    />
-                                    <div className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-black/80 rounded text-[10px] font-medium text-white uppercase">
-                                        {item.aiModel}
-                                    </div>
-                                    {likedPrompts.includes(item._id) && (
-                                        <div className="absolute top-2 right-2 p-1.5 bg-red-600 rounded-full shadow-lg">
-                                            <Heart size={12} fill="white" className="text-white" />
+                                <div className="glass-card p-5 flex flex-col h-full bg-card">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="text-[10px] font-bold uppercase tracking-widest text-muted/60 flex items-center gap-1.5">
+                                            <span className="w-1.5 h-1.5 rounded-full bg-foreground/20" />
+                                            {item.aiModel}
                                         </div>
-                                    )}
-                                </div>
-                                <div className="flex gap-3 px-1">
-                                    <div className="w-8 h-8 flex-shrink-0 bg-red-600 rounded-full flex items-center justify-center font-semibold text-white text-[11px] uppercase ring-1 ring-white/10">
-                                        {item.category?.[0] || 'P'}
+                                        {likedPrompts.includes(item._id) && (
+                                            <Heart size={14} fill="currentColor" className="text-foreground" />
+                                        )}
                                     </div>
-                                    <div className="flex-1 min-w-0">
-                                        <h3 className="text-[14px] font-semibold text-white line-clamp-2 leading-snug mb-0.5">{item.title}</h3>
-                                        <div className="text-[12px] text-zinc-500">
-                                            <span className="hover:text-zinc-300 transition-colors">{item.category}</span>
-                                            <span className="mx-1">•</span>
-                                            <span>{new Date(item.createdAt).toLocaleDateString()}</span>
+
+                                    <h3 className="text-base font-bold text-foreground leading-snug mb-2 group-hover:underline underline-offset-4 decoration-1">
+                                        {item.title}
+                                    </h3>
+
+                                    {item.description && (
+                                        <p className="text-xs text-muted/80 line-clamp-3 leading-relaxed mb-4 flex-grow">
+                                            {item.description}
+                                        </p>
+                                    )}
+
+                                    <div className="flex items-center justify-between mt-auto pt-4 border-t border-border">
+                                        <div className="text-[10px] font-semibold text-muted/60 uppercase tracking-tight">
+                                            {item.category}
+                                        </div>
+                                        <div className="text-[10px] font-mono text-muted/40">
+                                            {new Date(item.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }).toUpperCase()}
                                         </div>
                                     </div>
                                 </div>
@@ -357,129 +373,142 @@ const Home = () => {
                 )}
             </div>
 
-            {/* ===== YouTube-Style Watch Page Overlay ===== */}
+            {/* ===== Sleek Glass Modal Overlay ===== */}
             {selectedPrompt && (
                 <div
                     ref={watchContainerRef}
-                    className="fixed inset-0 z-[100] bg-[#0f0f0f] overflow-y-auto"
-                    style={{ top: '56px' }}
+                    className="fixed inset-0 z-[100] bg-background/95 backdrop-blur-2xl overflow-y-auto animate-fade-in"
                 >
                     {/* Mobile Back Header */}
-                    <div className="lg:hidden sticky top-0 bg-[#0f0f0f] z-20 flex items-center justify-between px-4 py-3 border-b border-white/5">
-                        <button onClick={handleClosePrompt} className="p-1 hover:text-zinc-300 transition-colors">
+                    <div className="lg:hidden sticky top-0 bg-background/80 backdrop-blur-md z-20 flex items-center justify-between px-4 py-4 border-b border-border">
+                        <button onClick={handleClosePrompt} className="p-2 hover:bg-white/5 rounded-full transition-colors">
                             <ChevronLeft size={24} />
                         </button>
-                        <span className="font-black uppercase tracking-tighter truncate px-4 text-sm">
-                            Promptcollection<span className="text-red-600">.</span>
+                        <span className="font-brand font-bold tracking-tight truncate px-4 text-sm text-foreground">
+                            Antigravity
                         </span>
-                        <div className="w-6" />
+                        <div className="w-10" />
                     </div>
 
                     {/* Desktop Close Button */}
                     <button
                         onClick={handleClosePrompt}
-                        className="hidden lg:flex fixed top-20 right-6 z-[110] items-center gap-2 px-4 py-2 bg-zinc-900/80 hover:bg-red-600 rounded-full text-sm text-white transition-all border border-white/10 backdrop-blur-sm"
+                        className="hidden lg:flex fixed top-8 right-8 z-[110] items-center gap-2 px-4 py-2 bg-foreground text-background hover:bg-white/90 rounded-md text-xs font-bold transition-all shadow-xl"
                     >
-                        <X size={16} />
-                        <span>Close</span>
+                        <X size={14} />
+                        <span className="uppercase tracking-widest">Close</span>
                     </button>
 
-                    {/* Watch Page Content — scrolls naturally */}
-                    <div className="max-w-[1500px] mx-auto flex flex-col lg:flex-row gap-8 lg:px-8 pt-4 pb-20">
+                    {/* Modal Content */}
+                    <div className="max-w-[1400px] mx-auto flex flex-col lg:flex-row gap-10 lg:px-12 pt-6 lg:pt-16 pb-24">
 
                         {/* Left: Main Content (image + info) */}
-                        <div className="flex-1 min-w-0">
-                            {/* Image — NOT sticky, scrolls with page like YouTube */}
-                            <div className="bg-black lg:rounded-2xl overflow-hidden border-b lg:border border-white/5 flex items-center justify-center shadow-2xl">
-                                <img
-                                    src={selectedPrompt.image}
-                                    alt={selectedPrompt.title}
-                                    className="max-w-full w-full h-auto object-contain max-h-[90vh]"
-                                />
-                            </div>
+                        <div className="flex-1 min-w-0 flex flex-col gap-8">
+
+                            {/* Image Showcase */}
+                            {selectedPrompt.image && (
+                                <div className="bg-card/30 lg:rounded-3xl overflow-hidden border-y lg:border border-border flex items-center justify-center p-2 lg:p-8 backdrop-blur-md relative group">
+                                    <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
+                                    <img
+                                        src={selectedPrompt.image}
+                                        alt={selectedPrompt.title}
+                                        className="max-w-full w-auto h-auto object-contain max-h-[75vh] rounded-xl lg:rounded-2xl shadow-2xl ring-1 ring-white/10"
+                                    />
+                                </div>
+                            )}
 
                             {/* Info Section */}
-                            <div className="p-4 lg:px-0 lg:py-6 space-y-4">
-                                <h2 className="text-lg md:text-2xl font-semibold leading-snug">{selectedPrompt.title}</h2>
+                            <div className="p-6 lg:p-0 space-y-6">
+                                <h1 className="text-3xl lg:text-5xl font-black leading-tight tracking-tight uppercase">
+                                    {selectedPrompt.title}
+                                </h1>
 
-                                {/* Channel Row (YouTube-style) */}
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 py-4 border-b border-white/5">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 md:w-11 md:h-11 bg-zinc-900 rounded-full flex items-center justify-center border border-white/10 flex-shrink-0">
-                                            <span className="text-red-600 font-black text-base uppercase">P</span>
+                                {/* Author & Actions Row */}
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 py-6 border-y border-border">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-12 h-12 bg-cardHighlight rounded-full flex items-center justify-center border border-border shadow-inner">
+                                            <span className="text-accent font-bold text-lg font-brand">A</span>
                                         </div>
-                                        <div className="min-w-0">
-                                            <p className="font-black uppercase text-base tracking-tighter leading-none">
-                                                Promptcollection<span className="text-red-600">.</span>
-                                            </p>
-                                            <p className="text-xs text-zinc-500 mt-0.5">{selectedPrompt.aiModel}</p>
+                                        <div>
+                                            <p className="font-semibold text-base">Antigravity Hub</p>
+                                            <p className="text-sm text-muted mt-0.5">{selectedPrompt.aiModel}</p>
                                         </div>
                                         <button
                                             onClick={handleJoinHub}
-                                            className={`ml-4 px-5 py-2 rounded-full text-sm font-semibold transition-all ${isJoined ? 'bg-zinc-800 text-zinc-400' : 'bg-white text-black hover:bg-zinc-200'}`}
+                                            className={`ml-6 px-4 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-widest transition-all ${isJoined ? 'bg-card text-muted border border-border' : 'bg-foreground text-background hover:bg-white/90 shadow-md'}`}
                                         >
-                                            {isJoined ? 'Joined' : 'Join Hub'}
+                                            {isJoined ? 'Subscribed' : 'Join Hub'}
                                         </button>
                                     </div>
 
-                                    <div className="flex items-center gap-2">
-                                        <div className="flex items-center bg-zinc-800 rounded-full h-10">
-                                            <button
-                                                onClick={() => handleLike(selectedPrompt._id)}
-                                                className={`flex items-center gap-2 px-4 h-10 hover:bg-zinc-700 rounded-full text-sm font-medium transition-all ${likedPrompts.includes(selectedPrompt._id) ? 'text-red-500' : 'text-white'}`}
-                                            >
-                                                <ThumbsUp size={16} fill={likedPrompts.includes(selectedPrompt._id) ? "currentColor" : "none"} />
-                                                <span>{likedPrompts.includes(selectedPrompt._id) ? 'Liked' : 'Like'}</span>
-                                            </button>
-                                        </div>
+                                    <div className="flex items-center gap-3">
+                                        <button
+                                            onClick={() => handleLike(selectedPrompt._id)}
+                                            className={`flex items-center justify-center gap-2 h-9 px-4 rounded-md text-[11px] font-bold uppercase tracking-widest transition-all border ${likedPrompts.includes(selectedPrompt._id) ? 'bg-foreground text-background border-foreground' : 'bg-card border-border hover:bg-cardHighlight text-foreground'}`}
+                                        >
+                                            <Heart size={14} fill={likedPrompts.includes(selectedPrompt._id) ? "currentColor" : "none"} />
+                                            <span>{likedPrompts.includes(selectedPrompt._id) ? 'Liked' : 'Like'}</span>
+                                        </button>
                                         <button
                                             onClick={() => copyToClipboard(selectedPrompt.promptText, selectedPrompt._id)}
-                                            className="flex items-center gap-2 px-5 h-10 bg-white text-black hover:bg-zinc-200 rounded-full text-sm font-semibold transition-all active:scale-95"
+                                            className="flex items-center justify-center gap-2 h-9 px-5 bg-foreground hover:bg-white/90 text-background rounded-md text-[11px] font-bold uppercase tracking-widest transition-all shadow-md"
                                         >
-                                            {copiedId === selectedPrompt._id ? <Check size={16} /> : <Copy size={16} />}
-                                            <span>{copiedId === selectedPrompt._id ? 'Copied!' : 'Copy Prompt'}</span>
+                                            {copiedId === selectedPrompt._id ? <Check size={14} /> : <Copy size={14} />}
+                                            <span>{copiedId === selectedPrompt._id ? 'Copied' : 'Copy Prompt'}</span>
                                         </button>
                                     </div>
                                 </div>
 
                                 {/* Description Box */}
-                                <div className="bg-zinc-900 border border-white/5 rounded-2xl p-5 space-y-4">
-                                    <div className="flex gap-3 text-xs text-zinc-500">
-                                        <span className="text-zinc-400 font-medium">{selectedPrompt.category}</span>
-                                        <span>•</span>
-                                        <span>{new Date(selectedPrompt.createdAt).toDateString()}</span>
+                                <div className="glass-card p-6 md:p-8 space-y-6 border-white/5">
+                                    <div className="flex gap-4 text-sm font-medium text-muted">
+                                        <span className="px-3 py-1 bg-white/5 rounded-md text-foreground">{selectedPrompt.category}</span>
+                                        <span className="flex items-center">{new Date(selectedPrompt.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
                                     </div>
-                                    <div className="p-5 bg-black border border-white/5 rounded-xl relative overflow-hidden">
-                                        <div className="absolute top-0 left-0 w-1 h-full bg-red-600" />
-                                        <p className="text-sm md:text-base text-zinc-200 leading-relaxed select-all pl-3">
+
+                                    <div className="p-6 bg-background/50 border border-border rounded-xl relative group">
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-accent rounded-l-xl opacity-50 group-hover:opacity-100 transition-opacity" />
+                                        <p className="text-base md:text-lg text-foreground/90 font-mono leading-relaxed select-all pl-2">
                                             {selectedPrompt.promptText}
                                         </p>
                                     </div>
+
                                     {selectedPrompt.description && (
-                                        <p className="text-zinc-400 text-sm leading-relaxed">{selectedPrompt.description}</p>
+                                        <p className="text-muted text-base leading-relaxed max-w-3xl">
+                                            {selectedPrompt.description}
+                                        </p>
                                     )}
                                 </div>
                             </div>
                         </div>
 
                         {/* Right: Recommended (Up Next) */}
-                        <div className="w-full lg:w-[400px] px-4 lg:px-0 flex-shrink-0">
-                            <h3 className="text-sm font-semibold text-zinc-400 mb-4">Up next</h3>
-                            <div className="space-y-4">
-                                {suggestions.filter(p => p._id !== selectedPrompt._id).map(rec => (
+                        <div className="w-full lg:w-[420px] px-6 lg:px-0 flex-shrink-0">
+                            <h3 className="text-base font-semibold text-foreground mb-6 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                                Discover more
+                            </h3>
+                            <div className="flex flex-col gap-4">
+                                {suggestions.filter(p => p._id !== selectedPrompt._id).map((rec, idx) => (
                                     <div
                                         key={rec._id}
                                         onClick={() => handleSelectPrompt(rec)}
-                                        className="flex gap-3 cursor-pointer group"
+                                        className="glass-card p-4 cursor-pointer flex gap-4 animate-slide-up"
+                                        style={{ animationDelay: `${idx * 50}ms` }}
                                     >
-                                        <div className="w-40 h-24 flex-shrink-0 bg-zinc-900 rounded-xl overflow-hidden border border-white/5">
-                                            <img src={rec.image} alt={rec.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                        <div className="w-24 h-24 flex-shrink-0 bg-background rounded-lg border border-border overflow-hidden flex items-center justify-center">
+                                            {rec.image ? (
+                                                <img src={rec.image} alt={rec.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            ) : (
+                                                <span className="text-muted/30 font-bold text-2xl">{rec.title.charAt(0)}</span>
+                                            )}
                                         </div>
-                                        <div className="flex-1 min-w-0 py-1">
-                                            <h4 className="text-sm font-semibold text-white line-clamp-2 leading-snug mb-1 group-hover:text-zinc-300 transition-colors">{rec.title}</h4>
-                                            <div className="text-xs text-zinc-500 space-y-0.5">
-                                                <p>{rec.category}</p>
-                                                <p>{new Date(rec.createdAt).toLocaleDateString()}</p>
+                                        <div className="flex-1 min-w-0 flex flex-col justify-center">
+                                            <h4 className="text-sm font-semibold text-foreground leading-tight mb-2 line-clamp-2">{rec.title}</h4>
+                                            <div className="flex items-center gap-2 text-[11px] font-medium text-muted">
+                                                <span className="px-2 py-0.5 bg-white/5 rounded text-foreground/80">{rec.category}</span>
+                                                <span>•</span>
+                                                <span className="truncate">{rec.aiModel}</span>
                                             </div>
                                         </div>
                                     </div>
