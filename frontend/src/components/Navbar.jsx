@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Menu, Search, User as UserIcon, PlusSquare, Bell, LogOut, Shield, X, Image } from 'lucide-react';
 import { db } from '../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
-import { API_ENDPOINTS } from '../api/apiConfig';
+import { fetchPrompts } from '../api/apiConfig';
 
 const Navbar = ({ toggleSidebar }) => {
     const { user, logout } = useAuth();
@@ -39,17 +39,16 @@ const Navbar = ({ toggleSidebar }) => {
     // Fetch recent prompts to show as notifications
     useEffect(() => {
         if (!isJoined) return;
-        fetch(API_ENDPOINTS.PROMPTS)
-            .then(r => r.json())
-            .then(data => {
-                const promptsArray = Array.isArray(data) ? data : (data.prompts || []);
-                if (Array.isArray(promptsArray)) {
-                    // sort newest first, take top 5
-                    const sorted = [...promptsArray].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+        const loadNotifs = async () => {
+            try {
+                const result = await fetchPrompts({ pageSize: 5, shuffle: false });
+                if (result && result.prompts) {
+                    const sorted = [...result.prompts].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
                     setRecentPrompts(sorted);
                 }
-            })
-            .catch(() => { });
+            } catch (e) { /* silently fail */ }
+        };
+        loadNotifs();
     }, [isJoined]);
 
     // Close notification panel on outside click

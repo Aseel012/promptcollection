@@ -5,7 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { db } from '../lib/firebase';
 import { doc, setDoc, getDoc, updateDoc, arrayUnion, arrayRemove } from 'firebase/firestore';
 import Masonry from 'react-masonry-css';
-import { API_ENDPOINTS } from '../api/apiConfig';
+import { fetchPrompts, fetchCategories, fetchEngines } from '../api/apiConfig';
 
 const Home = () => {
     const { user } = useAuth();
@@ -27,78 +27,67 @@ const Home = () => {
 
     const [showJoinedToast, setShowJoinedToast] = useState(false);
 
+    // Fetch categories and engines once on mount
     useEffect(() => {
-        const fetchMetadata = async () => {
+        const loadMetadata = async () => {
             try {
-                const [catRes, engRes] = await Promise.all([
-                    fetch(API_ENDPOINTS.CATEGORIES, { headers: { 'Cache-Control': 'no-cache' } }),
-                    fetch(API_ENDPOINTS.ENGINES, { headers: { 'Cache-Control': 'no-cache' } }),
+                const [cats, engs] = await Promise.all([
+                    fetchCategories(),
+                    fetchEngines(),
                 ]);
-                const catData = await catRes.json();
-                if (Array.isArray(catData)) {
-                    setCategories(catData);
-                    localStorage.setItem('cache_categories', JSON.stringify(catData));
-                }
-                const engData = await engRes.json();
-                if (Array.isArray(engData)) {
-                    setEngines(engData);
-                    localStorage.setItem('cache_engines', JSON.stringify(engData));
-                }
+                setCategories(cats);
+                setEngines(engs);
             } catch (error) {
                 console.error("Error fetching metadata:", error);
             }
         };
-        fetchMetadata();
+        loadMetadata();
     }, []);
 
+    // Reset page to 1 whenever filter or search changes
     useEffect(() => {
-        const fetchData = async () => {
+        setPageNumber(1);
+    }, [activeChip, location.search]);
+
+    // Main data fetching
+    useEffect(() => {
+        const loadData = async () => {
             if (pageNumber === 1) setLoading(true);
             const params = new URLSearchParams(location.search);
             const searchQuery = params.get('search') || '';
             const urlCategory = params.get('category') || params.get('chip');
 
-            // Sync activeChip with URL if needed
             if (urlCategory && activeChip === "All") {
                 setActiveChip(urlCategory);
             }
 
-            let queryParams = new URLSearchParams();
-            queryParams.append('pageNumber', pageNumber);
-
-            if (searchQuery) queryParams.append('keyword', searchQuery);
-
-            if (activeChip !== "All" && activeChip !== "Recent" && activeChip !== "Liked") {
-                queryParams.append('category', activeChip);
-                queryParams.append('shuffle', 'true');
-                queryParams.append('t', Date.now());
-            } else if (activeChip === "Recent") {
-                if (recentPrompts.length > 0) queryParams.append('ids', recentPrompts.join(','));
-            } else if (activeChip === "Liked") {
-                if (likedPrompts.length > 0) queryParams.append('ids', likedPrompts.join(','));
-            } else if (activeChip === "All") {
-                queryParams.append('shuffle', 'true');
-                queryParams.append('t', Date.now());
-            }
-
             try {
-                const promptRes = await fetch(`${API_ENDPOINTS.PROMPTS}?${queryParams.toString()}`, {
-                    headers: { 'Cache-Control': 'no-cache' }
-                });
-                const promptData = await promptRes.json();
+                let result;
 
-                if (promptData && promptData.prompts) {
-                    if (pageNumber === 1) {
-                        setPrompts(promptData.prompts);
-                        localStorage.setItem('cache_prompts', JSON.stringify(promptData.prompts));
+                if (searchQuery) {
+                    result = await fetchPrompts({ keyword: searchQuery, shuffle: false });
+                } else if (activeChip !== "All" && activeChip !== "Recent" && activeChip !== "Liked") {
+                    result = await fetchPrompts({ category: activeChip, shuffle: true });
+                } else if (activeChip === "Recent") {
+                    if (recentPrompts.length > 0) {
+                        result = await fetchPrompts({ ids: recentPrompts, shuffle: false });
                     } else {
-                        setPrompts(prev => {
-                            const existingIds = prev.map(p => p._id);
-                            const newPrompts = promptData.prompts.filter(p => !existingIds.includes(p._id));
-                            return [...prev, ...newPrompts];
-                        });
+                        result = { prompts: [], pages: 1, count: 0 };
                     }
-                    setTotalPages(promptData.pages);
+                } else if (activeChip === "Liked") {
+                    if (likedPrompts.length > 0) {
+                        result = await fetchPrompts({ ids: likedPrompts, shuffle: false });
+                    } else {
+                        result = { prompts: [], pages: 1, count: 0 };
+                    }
+                } else {
+                    // "All" - shuffled
+                    result = await fetchPrompts({ shuffle: true });
+                }
+
+                if (result && result.prompts) {
+                    setPrompts(prev => pageNumber === 1 ? result.prompts : [...prev, ...result.prompts]);
+                    setTotalPages(result.pages);
                 }
             } catch (error) {
                 console.error("Connection error:", error);
@@ -106,7 +95,7 @@ const Home = () => {
                 setLoading(false);
             }
         };
-        fetchData();
+        loadData();
     }, [pageNumber, activeChip, location.search, likedPrompts.length, recentPrompts.length]);
 
     useEffect(() => {
@@ -122,19 +111,19 @@ const Home = () => {
 
     // Fetch shuffled suggestions for "Up Next"
     useEffect(() => {
-        const fetchSuggestions = async () => {
+        const loadSuggestions = async () => {
             try {
-                const res = await fetch(`${API_ENDPOINTS.PROMPTS}?pageSize=20&shuffle=true&t=${Date.now()}`);
-                const data = await res.json();
-                if (data && data.prompts) {
-                    setSuggestions(data.prompts);
+                const result = await fetchPrompts({ pageSize: 6, shuffle: true });
+                if (result && result.prompts) {
+                    setSuggestions(result.prompts);
                 }
             } catch (error) {
                 console.error("Error fetching suggestions:", error);
             }
         };
-        fetchSuggestions();
+        loadSuggestions();
     }, [selectedPrompt?._id]);
+
 
     useEffect(() => {
         if (user) {

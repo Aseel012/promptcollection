@@ -43,7 +43,8 @@ if (!serviceAccount.privateKey) {
 
 try {
     admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+        credential: admin.credential.cert(serviceAccount),
+        storageBucket: 'promptlib-56d93.firebasestorage.app'
     });
     console.log('✅ Firebase Admin Initialized Successfully');
 } catch (error) {

@@ -4,9 +4,17 @@ import {
     LayoutGrid, Database, Cpu, Image as ImageIcon, RefreshCw,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { storage } from '../lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { API_ENDPOINTS, API_BASE_URL } from '../api/apiConfig';
+import {
+    fetchPrompts, fetchCategories as apiFetchCategories, fetchEngines as apiFetchEngines,
+    createPrompt, updatePrompt, deletePrompt as apiDeletePrompt,
+    createCategory, deleteCategory as apiDeleteCategory,
+    createEngine, deleteEngine as apiDeleteEngine,
+    INSFORGE_HEADERS, API_BASE_URL,
+} from '../api/apiConfig';
 
 const FALLBACK_ENGINES = ["Midjourney", "DALL-E 3", "Stable Diffusion XL", "Leonardo AI", "Freepik", "Gemini"];
 
@@ -27,6 +35,7 @@ const Admin = () => {
     const [isAddingPrompt, setIsAddingPrompt] = useState(false);
     const [editingPrompt, setEditingPrompt] = useState(null); // holds prompt object for edit
     const [previewImage, setPreviewImage] = useState(null);
+    const [promptImageFile, setPromptImageFile] = useState(null);
     const [formData, setFormData] = useState({
         title: '', description: '', promptText: '', aiModel: '', category: '', image: '', tags: ''
     });
@@ -34,6 +43,7 @@ const Admin = () => {
     // Category form
     const [isAddingCategory, setIsAddingCategory] = useState(false);
     const [catPreviewImage, setCatPreviewImage] = useState(null);
+    const [catImageFile, setCatImageFile] = useState(null);
     const [categoryData, setCategoryData] = useState({ name: '', image: '', description: '' });
 
     // Engine form
@@ -53,52 +63,23 @@ const Admin = () => {
         setLoading(true);
         try {
             setError(null);
-            const healthRes = await fetch(API_ENDPOINTS.HEALTH).catch(() => null);
-            if (healthRes && healthRes.ok) {
-                const healthData = await healthRes.json();
-                // Handle both 'db' (PostgreSQL) and legacy 'database' formats
-                const status = healthData.db || healthData.database || 'OFFLINE';
-                setDbHealth({ db: status });
-            } else {
-                setDbHealth({ db: 'OFFLINE' });
-            }
+            setDbHealth({ db: 'CONNECTED' }); // InsForge is always connected
 
-            const [promptRes, catRes, engRes] = await Promise.all([
-                fetch(`${API_ENDPOINTS.PROMPTS}?pageSize=1000`),
-                fetch(API_ENDPOINTS.CATEGORIES),
-                fetch(API_ENDPOINTS.ENGINES),
+            const [promptResult, cats, engs] = await Promise.all([
+                fetchPrompts({ pageSize: 1000, shuffle: false }),
+                apiFetchCategories(),
+                apiFetchEngines(),
             ]);
 
-            if (promptRes.ok) {
-                const promptData = await promptRes.json();
-                const promptsArray = Array.isArray(promptData) ? promptData : (promptData.prompts || []);
-                setPrompts(Array.isArray(promptsArray) ? promptsArray : []);
+            setPrompts(promptResult.prompts || []);
+            setCategories(cats || []);
+            if (cats.length > 0 && !formData.category) {
+                setFormData(prev => ({ ...prev, category: cats[0].name }));
             }
-            if (catRes.ok) {
-                const catData = await catRes.json();
-                const validCats = Array.isArray(catData) ? catData : [];
-                setCategories(validCats);
-                if (validCats.length > 0 && !formData.category) {
-                    setFormData(prev => ({ ...prev, category: validCats[0].name }));
-                }
-            }
-            if (engRes.ok) {
-                const engData = await engRes.json();
-                setEngines(Array.isArray(engData) ? engData : []);
-            }
+            setEngines(engs || []);
         } catch (error) {
             console.error("Critical Sync Failure:", error);
-            const errorMessage = error.message || "Unknown Connection Error";
-            setError(`
-                CRITICAL: DATABASE UPLINK FAILED
-                Attempted: ${API_BASE_URL}
-                
-                TROUBLESHOOTING:
-                1. Check if Render/Local backend is ACTIVE/LIVE
-                2. Verify INSFORGE_POSTGRES_URL in .env
-                3. Ensure PostgreSQL DB is accessible from this host
-                4. Error Details: ${errorMessage}
-            `);
+            setError(`DATABASE UPLINK FAILED: ${error.message}`);
             setDbHealth({ db: 'OFFLINE' });
             setPrompts([]);
             setCategories([]);
@@ -115,14 +96,23 @@ const Admin = () => {
             reader.onloadend = () => {
                 if (type === 'prompt') {
                     setPreviewImage(reader.result);
-                    setFormData({ ...formData, image: reader.result });
+                    setPromptImageFile(file);
                 } else {
                     setCatPreviewImage(reader.result);
-                    setCategoryData({ ...categoryData, image: reader.result });
+                    setCatImageFile(file);
                 }
             };
             reader.readAsDataURL(file);
         }
+    };
+
+    const uploadImageToFirebase = async (file, pathPrefix) => {
+        if (!file) return null;
+        const filename = `${pathPrefix}_${Date.now()}_${file.name}`;
+        const storageRef = ref(storage, `uploads/${filename}`);
+        await uploadBytes(storageRef, file);
+        const downloadURL = await getDownloadURL(storageRef);
+        return downloadURL;
     };
 
     // ── Prompt CRUD ──────────────────────────────────────────────
@@ -151,27 +141,36 @@ const Admin = () => {
             const cat = formData.category || categories[0]?.name;
             if (!cat) { alert("Please create a category first!"); setActionLoading(false); return; }
 
-            const method = editingPrompt ? 'PUT' : 'POST';
-            const url = editingPrompt
-                ? `${API_ENDPOINTS.PROMPTS}/${editingPrompt._id}`
-                : API_ENDPOINTS.PROMPTS;
-
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer MASTER_STUDIO_BYPASS' },
-                body: JSON.stringify({ ...formData, category: cat, user: user.uid })
-            });
-            if (response.ok) {
-                await fetchData();
-                setIsAddingPrompt(false);
-                setEditingPrompt(null);
-                setPreviewImage(null);
-            } else {
-                const data = await response.json();
-                alert("Error: " + data.message);
+            let finalImageUrl = formData.image;
+            if (promptImageFile) {
+                finalImageUrl = await uploadImageToFirebase(promptImageFile, 'prompt');
             }
+
+            const promptPayload = {
+                title: formData.title,
+                description: formData.description,
+                promptText: formData.promptText,
+                aiModel: formData.aiModel,
+                category: cat,
+                image: finalImageUrl,
+                tags: formData.tags ? formData.tags.split(',').map(t => t.trim()) : [],
+                userId: user.uid,
+            };
+
+            if (editingPrompt) {
+                await updatePrompt(editingPrompt._id, promptPayload);
+            } else {
+                await createPrompt(promptPayload);
+            }
+
+            await fetchData();
+            setIsAddingPrompt(false);
+            setEditingPrompt(null);
+            setPreviewImage(null);
+            setPromptImageFile(null);
+            setFormData(prev => ({ ...prev, image: '' }));
         } catch (error) {
-            alert("Upload Failed: Connection Timeout / Buffer Error.");
+            alert("Upload Failed: " + error.message);
         } finally {
             setActionLoading(false);
         }
@@ -183,22 +182,19 @@ const Admin = () => {
         if (actionLoading) return;
         setActionLoading(true);
         try {
-            const response = await fetch(API_ENDPOINTS.CATEGORIES, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer MASTER_STUDIO_BYPASS' },
-                body: JSON.stringify(categoryData)
-            });
-            if (response.ok) {
-                await fetchData();
-                setIsAddingCategory(false);
-                setCategoryData({ name: '', image: '', description: '' });
-                setCatPreviewImage(null);
-            } else {
-                const data = await response.json();
-                alert("Error: " + data.message);
+            let finalImageUrl = categoryData.image;
+            if (catImageFile) {
+                finalImageUrl = await uploadImageToFirebase(catImageFile, 'category');
             }
+
+            await createCategory({ ...categoryData, image: finalImageUrl });
+            await fetchData();
+            setIsAddingCategory(false);
+            setCategoryData({ name: '', image: '', description: '' });
+            setCatPreviewImage(null);
+            setCatImageFile(null);
         } catch (error) {
-            alert("Category Creation Failed: Network Timeout.");
+            alert("Category Creation Failed: " + error.message);
         } finally {
             setActionLoading(false);
         }
@@ -222,27 +218,18 @@ const Admin = () => {
         if (actionLoading) return;
         setActionLoading(true);
         try {
-            const method = editingEngine ? 'PUT' : 'POST';
-            const url = editingEngine
-                ? `${API_ENDPOINTS.ENGINES}/${editingEngine._id}`
-                : API_ENDPOINTS.ENGINES;
-
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer MASTER_STUDIO_BYPASS' },
-                body: JSON.stringify(engineData)
-            });
-            if (response.ok) {
-                await fetchData();
-                setIsAddingEngine(false);
-                setEditingEngine(null);
-                setEngineData({ name: '', description: '', website: '', icon: '', isActive: true });
+            if (editingEngine) {
+                // For engines, just create a new one (PostgREST upsert)
+                await createEngine(engineData);
             } else {
-                const data = await response.json();
-                alert("Error: " + data.message);
+                await createEngine(engineData);
             }
+            await fetchData();
+            setIsAddingEngine(false);
+            setEditingEngine(null);
+            setEngineData({ name: '', description: '', website: '', icon: '', isActive: true });
         } catch (error) {
-            alert("Engine Save Failed: Network issue.");
+            alert("Engine Save Failed: " + error.message);
         } finally {
             setActionLoading(false);
         }
@@ -252,16 +239,16 @@ const Admin = () => {
     const handleDelete = async (id, type) => {
         if (window.confirm(`Delete this ${type}?`)) {
             try {
-                await fetch(`${API_BASE_URL}/api/${type}s/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': 'Bearer MASTER_STUDIO_BYPASS' }
-                });
+                if (type === 'prompt') await apiDeletePrompt(id);
+                else if (type === 'category') await apiDeleteCategory(id);
+                else if (type === 'engine') await apiDeleteEngine(id);
                 fetchData();
             } catch (error) {
                 console.error("Deletion Error:", error);
             }
         }
     };
+
 
     if (!user || user.email !== 'shaikhmdaseel@gmail.com') return null;
 

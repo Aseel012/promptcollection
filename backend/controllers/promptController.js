@@ -10,9 +10,9 @@ const getPrompts = async (req, res, next) => {
         res.setHeader('Pragma', 'no-cache');
         res.setHeader('Expires', '0');
 
-        const pageSize = req.query.pageSize ? Number(req.query.pageSize) : 24;
         const page = Number(req.query.pageNumber) || 1;
         const { keyword, category, ids, shuffle } = req.query;
+        const isShuffle = shuffle === 'true';
 
         const filter = {};
         if (keyword) {
@@ -26,16 +26,22 @@ const getPrompts = async (req, res, next) => {
         }
 
         const count = await Prompt.countDocuments(filter);
+
+        // When shuffling, return ALL results in random order (no pagination gaps)
+        // When not shuffling, paginate normally
+        const pageSize = isShuffle ? Math.max(count, 1) : (req.query.pageSize ? Number(req.query.pageSize) : 24);
+        const skip = isShuffle ? 0 : pageSize * (page - 1);
+
         const prompts = await Prompt.find(filter, {
             limit: pageSize,
-            skip: pageSize > 100 ? 0 : pageSize * (page - 1),
-            shuffle: shuffle === 'true'
+            skip: skip,
+            shuffle: isShuffle
         });
 
         res.json({
             prompts,
             page,
-            pages: Math.ceil(count / pageSize),
+            pages: isShuffle ? 1 : Math.ceil(count / pageSize),
             count
         });
     } catch (error) {

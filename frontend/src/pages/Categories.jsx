@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronRight, LayoutGrid, Search } from 'lucide-react';
+import { fetchCategories as loadCategories } from '../api/apiConfig';
 
 const Categories = () => {
     const [categories, setCategories] = useState([]);
@@ -9,31 +10,19 @@ const Categories = () => {
     const navigate = useNavigate();
 
     useEffect(() => {
-        const fetchCategories = async () => {
-            // Load from cache for "instant" feel
-            const cached = localStorage.getItem('cache_categories');
-            if (cached) setCategories(JSON.parse(cached));
-
+        const init = async () => {
             try {
-                const response = await fetch(API_ENDPOINTS.CATEGORIES);
-                const data = await response.json();
-
-                if (Array.isArray(data)) {
-                    setCategories(data);
-                    localStorage.setItem('cache_categories', JSON.stringify(data));
-                } else {
-                    console.error("Categories API returned non-array data:", data);
-                    if (!cached) setCategories([]);
-                }
+                const cats = await loadCategories({ includeImage: true });
+                setCategories(cats);
             } catch (error) {
                 console.error("Fetch error:", error);
-                if (!cached) setCategories([]);
             } finally {
                 setLoading(false);
             }
         };
-        fetchCategories();
+        init();
     }, []);
+
 
     const handleCategoryClick = (category) => {
         navigate(`/?chip=${category}`);
