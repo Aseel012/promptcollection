@@ -12,7 +12,7 @@ import {
     fetchPrompts, fetchCategories as apiFetchCategories, fetchEngines as apiFetchEngines,
     createPrompt, updatePrompt, deletePrompt as apiDeletePrompt,
     createCategory, deleteCategory as apiDeleteCategory,
-    createEngine, deleteEngine as apiDeleteEngine,
+    createEngine, updateEngine, deleteEngine as apiDeleteEngine,
     INSFORGE_HEADERS, API_BASE_URL,
 } from '../api/apiConfig';
 
@@ -219,8 +219,7 @@ const Admin = () => {
         setActionLoading(true);
         try {
             if (editingEngine) {
-                // For engines, just create a new one (PostgREST upsert)
-                await createEngine(engineData);
+                await updateEngine(editingEngine._id, engineData);
             } else {
                 await createEngine(engineData);
             }

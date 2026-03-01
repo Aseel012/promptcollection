@@ -1,119 +1,92 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, LayoutGrid, Clock, Heart, Shield, X } from 'lucide-react';
+import { Home, LayoutGrid, X, Shield, LogOut } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const Sidebar = ({ isOpen, closeSidebar }) => {
     const location = useLocation();
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
     const isAdmin = user?.email === 'shaikhmdaseel@gmail.com';
 
     const menuItems = [
-        { icon: <Home size={20} />, label: 'Home', path: '/' },
-        { icon: <LayoutGrid size={20} />, label: 'Categories', path: '/categories' },
+        { icon: <Home size={22} />, label: 'Home', path: '/' },
+        { icon: <LayoutGrid size={22} />, label: 'Categories', path: '/categories' },
     ];
 
     const SidebarContent = () => (
-        <div className="py-8 px-5 space-y-10">
-            {/* Header for mobile */}
-            <div className="flex items-center gap-6 px-2 mb-10 lg:hidden focus:outline-none">
-                <button onClick={closeSidebar} className="p-2 hover:bg-white/5 rounded-full silent-transition">
-                    <X size={20} className="text-muted/40" />
-                </button>
-                <Link to="/" className="flex items-center gap-3">
-                    <div className="w-1.5 h-1.5 bg-foreground rounded-full" />
-                    <span className="text-foreground text-[10px] font-bold uppercase tracking-[0.4em] italic leading-none pt-1">The Hub</span>
+        <div className="py-12 px-8 flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-16">
+                <Link to="/" onClick={closeSidebar} className="flex items-center gap-3">
+                    <div className="w-8 h-8 bg-accent rounded-lg flex items-center justify-center">
+                        <span className="text-black font-black text-xs italic">P</span>
+                    </div>
+                    <span className="text-white text-sm font-black uppercase tracking-[0.3em]">Collection</span>
                 </Link>
+                <button onClick={closeSidebar} className="p-2 bg-white/5 rounded-full text-white/40">
+                    <X size={20} />
+                </button>
             </div>
 
-            {/* Main Nav */}
-            <div className="space-y-2">
-                <p className="px-4 text-[9px] font-bold text-muted/20 uppercase tracking-[0.3em] mb-4">Core</p>
+            {/* Navigation */}
+            <div className="space-y-4 flex-1">
+                <p className="text-[10px] font-black text-white/10 uppercase tracking-[0.4em] mb-8">Navigation</p>
                 {menuItems.map((item) => (
                     <Link
                         key={item.label}
                         to={item.path}
-                        onClick={() => { if (window.innerWidth < 1024) closeSidebar(); }}
-                        className={`flex items-center gap-6 px-4 py-3 rounded-2xl silent-transition group ${location.pathname === item.path ? 'bg-white/5 text-foreground' : 'text-muted/40 hover:text-foreground hover:bg-white/[0.02]'}`}
+                        onClick={closeSidebar}
+                        className={`flex items-center gap-6 p-6 rounded-[2rem] silent-transition group ${location.pathname === item.path ? 'bg-accent text-black' : 'text-white/40 hover:text-white hover:bg-white/5'}`}
                     >
-                        <div className={`silent-transition ${location.pathname === item.path ? 'text-foreground' : 'text-muted/20 group-hover:text-muted/60'}`}>
+                        <div className="transition-transform group-active:scale-90">
                             {item.icon}
                         </div>
-                        <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
+                        <span className="text-xs font-black uppercase tracking-[0.2em]">{item.label}</span>
                     </Link>
                 ))}
             </div>
 
-            {/* Library */}
-            <div className="space-y-2">
-                <p className="px-4 text-[9px] font-bold text-muted/20 uppercase tracking-[0.3em] mb-4">Intelligence</p>
-                <Link
-                    to="/?chip=Recent"
-                    onClick={() => { if (window.innerWidth < 1024) closeSidebar(); }}
-                    className="flex items-center gap-6 px-4 py-3 rounded-2xl silent-transition text-muted/40 hover:text-foreground hover:bg-white/[0.02] group"
-                >
-                    <Clock size={20} className="text-muted/20 group-hover:text-muted/60 silent-transition" />
-                    <span className="text-[11px] font-bold uppercase tracking-widest">Recent Archive</span>
-                </Link>
-                {user && (
-                    <Link
-                        to="/?chip=Liked"
-                        onClick={() => { if (window.innerWidth < 1024) closeSidebar(); }}
-                        className="flex items-center gap-6 px-4 py-3 rounded-2xl silent-transition text-muted/40 hover:text-foreground hover:bg-white/[0.02] group"
-                    >
-                        <Heart size={20} className="text-muted/20 group-hover:text-muted/60 silent-transition" />
-                        <span className="text-[11px] font-bold uppercase tracking-widest">Saved Assets</span>
-                    </Link>
-                )}
-            </div>
-
-            {isAdmin && (
-                <div className="space-y-2">
-                    <p className="px-4 text-[9px] font-bold text-red-500/20 uppercase tracking-[0.3em] mb-4">System</p>
-                    <Link
-                        to="/admin"
-                        onClick={() => { if (window.innerWidth < 1024) closeSidebar(); }}
-                        className={`flex items-center gap-6 px-4 py-3 rounded-2xl silent-transition group ${location.pathname === '/admin' ? 'bg-red-500/5 text-red-400' : 'text-muted/40 hover:text-red-400/80 hover:bg-red-500/[0.02]'}`}
-                    >
-                        <Shield size={20} className="opacity-20" />
-                        <span className="text-[11px] font-bold uppercase tracking-widest">Terminal</span>
-                    </Link>
+            {/* Footer / Auth */}
+            {user && (
+                <div className="mt-auto pt-8 border-t border-white/5 space-y-4">
+                    {isAdmin && (
+                        <Link
+                            to="/admin"
+                            onClick={closeSidebar}
+                            className="flex items-center gap-6 p-6 rounded-[2rem] text-white/40 hover:text-white hover:bg-white/5 silent-transition"
+                        >
+                            <Shield size={22} />
+                            <span className="text-xs font-black uppercase tracking-[0.2em]">Terminal</span>
+                        </Link>
+                    )}
                 </div>
             )}
         </div>
     );
 
     return (
-        <>
-            {/* Desktop Sidebar */}
-            <aside className={`fixed left-0 top-14 bottom-0 w-72 bg-background border-r border-white/[0.03] overflow-y-auto no-scrollbar z-40 transition-all duration-700 ease-in-out ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}`}>
-                <SidebarContent />
-            </aside>
-
-            {/* Mobile Drawer */}
-            <AnimatePresence>
-                {isOpen && (
-                    <div className="fixed inset-0 z-50 lg:hidden">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={closeSidebar}
-                            className="absolute inset-0 bg-background/60 backdrop-blur-md"
-                        />
-                        <motion.aside
-                            initial={{ x: '-100%' }}
-                            animate={{ x: 0 }}
-                            exit={{ x: '-100%' }}
-                            transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-                            className="absolute left-0 top-0 bottom-0 w-80 bg-background border-r border-white/5 shadow-2xl overflow-y-auto no-scrollbar"
-                        >
-                            <SidebarContent />
-                        </motion.aside>
-                    </div>
-                )}
-            </AnimatePresence>
-        </>
+        <AnimatePresence>
+            {isOpen && (
+                <div className="fixed inset-0 z-[150] lg:hidden">
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={closeSidebar}
+                        className="absolute inset-0 bg-black/80 backdrop-blur-3xl"
+                    />
+                    <motion.aside
+                        initial={{ x: '100%' }}
+                        animate={{ x: 0 }}
+                        exit={{ x: '100%' }}
+                        transition={{ type: 'spring', damping: 40, stiffness: 400 }}
+                        className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-black border-l border-white/10 shadow-[0_0_100px_rgba(0,0,0,1)] overflow-y-auto no-scrollbar"
+                    >
+                        <SidebarContent />
+                    </motion.aside>
+                </div>
+            )}
+        </AnimatePresence>
     );
 };
 

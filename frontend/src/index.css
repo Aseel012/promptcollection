@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Manrope:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,11 +6,11 @@
 
 @layer base {
   body {
-    background-color: theme('colors.background');
-    color: theme('colors.foreground');
-    @apply antialiased selection:bg-white selection:text-black;
-    font-family: 'Outfit', sans-serif;
-    letter-spacing: -0.02em;
+    background-color: #000000;
+    color: #FFFFFF;
+    @apply antialiased selection:bg-accent selection:text-white;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.01em;
   }
 
   h1,
@@ -19,84 +19,166 @@
   h4,
   h5,
   h6 {
-    @apply font-semibold tracking-tight;
-    color: theme('colors.foreground');
+    @apply font-bold tracking-tighter;
+    color: #FFFFFF;
   }
 
   ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 6px;
   }
 
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: #000000;
   }
 
   ::-webkit-scrollbar-thumb {
     background: #1A1A1A;
-    border-radius: 20px;
+    border-radius: 10px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: #2A2A2A;
+    background: #22C55E;
   }
 }
 
 @layer components {
 
-  /* Silent Interactive Transition */
+  /* Premium Transitions */
   .silent-transition {
-    @apply transition-all duration-500 ease-silent;
+    @apply transition-all duration-700;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Precision Aesthetic Card */
+  /* Page Container */
+  .page-container {
+    @apply max-w-7xl mx-auto px-6 md:px-12 py-12;
+  }
+
+  /* Glass Tags / Chips */
+  .glass-tag {
+    @apply px-5 py-2 rounded-full text-[10px] font-bold uppercase tracking-wider border border-white/5 text-white/30 hover:text-white hover:border-white/20 transition-all duration-300 whitespace-nowrap bg-white/[0.02] cursor-pointer;
+  }
+
+  .glass-tag-active {
+    @apply bg-accent text-white border-accent;
+  }
+
+  /* Premium Loader */
+  .premium-loader {
+    @apply w-8 h-8 border-2 border-white/10 border-t-accent rounded-full animate-spin;
+  }
+
+  /* Grainy Overlay */
+  .grainy-overlay {
+    @apply fixed inset-0 pointer-events-none z-0;
+    opacity: 0.03;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Glassmorphism Card (Dark) */
   .glass-card {
-    @apply bg-card border border-border rounded-[1.25rem] overflow-hidden silent-transition;
+    @apply bg-neutral-900/40 backdrop-blur-2xl border border-white/5 rounded-[2rem] overflow-hidden silent-transition;
   }
 
   .glass-card:hover {
-    @apply border-muted/30 bg-cardHighlight;
+    @apply border-accent/30 bg-neutral-900/60;
+    box-shadow: 0 0 40px -20px rgba(34, 197, 94, 0.15);
   }
 
-  /* Aesthetic Input */
-  .styled-input {
-    @apply bg-card border border-border rounded-xl px-5 py-3 text-foreground focus:border-foreground/30 outline-none silent-transition placeholder:text-muted/40 w-full text-sm;
+  /* Accent Glow */
+  .accent-glow {
+    @apply relative;
   }
 
-  /* Aesthetic Button */
-  .styled-button {
-    @apply px-6 py-2.5 bg-foreground text-background font-semibold rounded-full hover:bg-neutral-200 silent-transition active:scale-[0.97] flex items-center justify-center gap-2 text-xs uppercase tracking-widest;
+  .accent-glow::after {
+    content: '';
+    @apply absolute -z-10 blur-[100px] opacity-20 bg-accent rounded-full;
+    width: 300px;
+    height: 300px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
   }
 
-  .styled-button-outline {
-    @apply px-6 py-2.5 border border-border text-foreground font-semibold rounded-full hover:bg-cardHighlight silent-transition active:scale-[0.97] flex items-center justify-center gap-2 text-xs uppercase tracking-widest;
+  /* Premium Loader */
+  .premium-loader {
+    width: 48px;
+    height: 48px;
+    border: 3px solid rgba(255, 255, 255, 0.05);
+    border-bottom-color: #22C55E;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+  }
+
+  @keyframes rotation {
+    0% {
+      transform: rotate(0deg);
+    }
+
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* Textures */
+  .grainy-overlay {
+    @apply absolute inset-0 opacity-[0.03] pointer-events-none;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
 
   /* Navigation Tags */
   .glass-tag {
-    @apply px-4 py-1.5 bg-card border border-border rounded-full text-[10px] font-bold text-muted hover:text-foreground hover:border-foreground/20 silent-transition whitespace-nowrap cursor-pointer uppercase tracking-[0.15em];
+    @apply px-5 py-2 bg-white/5 border border-white/5 rounded-full text-[10px] font-bold text-white/50 hover:text-white hover:border-white/20 silent-transition whitespace-nowrap cursor-pointer uppercase tracking-[0.2em];
   }
 
   .glass-tag-active {
-    @apply bg-foreground text-background border-foreground hover:bg-neutral-200;
+    @apply bg-accent text-black border-accent hover:bg-accent/90 text-white;
   }
 
   /* Layout */
   .page-container {
-    @apply max-w-[1600px] mx-auto px-6 md:px-10 w-full pt-24 pb-20;
+    @apply max-w-[1800px] mx-auto px-6 md:px-12 w-full pt-28 pb-32;
   }
 
   /* Masonry Grid */
   .my-masonry-grid {
-    @apply flex -ml-6 w-auto;
+    @apply flex -ml-8 w-auto;
   }
 
   .my-masonry-grid_column {
-    @apply pl-6 bg-clip-padding;
+    @apply pl-8 bg-clip-padding;
   }
 
   .my-masonry-grid_column>div {
-    @apply mb-6;
+    @apply mb-8;
+  }
+
+  /* Admin Components */
+  .styled-button {
+    @apply inline-flex items-center justify-center gap-3 px-8 py-3 bg-white text-black text-[10px] font-bold uppercase tracking-[0.2em] rounded-full hover:bg-accent hover:text-white transition-all duration-300 cursor-pointer;
+  }
+
+  .styled-button-outline {
+    @apply inline-flex items-center justify-center gap-3 px-8 py-3 bg-transparent text-white/40 border border-white/10 text-[10px] font-bold uppercase tracking-[0.2em] rounded-full hover:border-white/30 hover:text-white transition-all duration-300 cursor-pointer;
+  }
+
+  .styled-input {
+    @apply w-full bg-neutral-900/50 border border-white/5 rounded-xl px-5 py-3 text-white text-sm outline-none transition-all duration-300;
+  }
+
+  .styled-input:focus {
+    @apply border-accent/40;
+  }
+
+  .styled-input::placeholder {
+    @apply text-white/10;
+  }
+
+  /* No Scrollbar */
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 
   .no-scrollbar {
@@ -104,7 +186,154 @@
     scrollbar-width: none;
   }
 
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+
+  /* ── 3D Perspective Image Carousel ── */
+  .perspective-carousel {
+    perspective: 1200px;
+    overflow: hidden;
+    padding: 20px 0;
   }
+
+  .carousel-track {
+    display: flex;
+    gap: 16px;
+    animation: carousel-scroll 25s linear infinite;
+    will-change: transform;
+    padding: 0 40px;
+  }
+
+  .carousel-track:hover {
+    animation-play-state: paused;
+  }
+
+  .carousel-card {
+    flex-shrink: 0;
+    width: 200px;
+    height: 280px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0a0a0a;
+    cursor: pointer;
+    transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    filter: grayscale(0.7) brightness(0.5);
+    transform: rotateY(-10deg) scale(0.92);
+    box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.8);
+    position: relative;
+  }
+
+  .carousel-card:hover {
+    filter: grayscale(0) brightness(1);
+    transform: rotateY(0deg) scale(1.05);
+    border-color: rgba(34, 197, 94, 0.4);
+    box-shadow: 0 20px 80px -20px rgba(34, 197, 94, 0.2), 0 30px 60px -30px rgba(0, 0, 0, 0.9);
+    z-index: 10;
+  }
+
+  .carousel-card img {
+    transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .carousel-card:hover img {
+    transform: scale(1.1);
+  }
+
+  .carousel-card-center {
+    filter: grayscale(0) brightness(1);
+    transform: scale(1.08);
+    border-color: rgba(255, 255, 255, 0.15);
+    z-index: 5;
+    box-shadow: 0 0 80px -20px rgba(34, 197, 94, 0.15), 0 30px 60px -20px rgba(0, 0, 0, 0.9);
+  }
+
+  @keyframes carousel-scroll {
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(-33.333%);
+    }
+  }
+
+  /* Responsive carousel cards */
+  @media (max-width: 640px) {
+    .carousel-card {
+      width: 140px;
+      height: 200px;
+      border-radius: 14px;
+    }
+
+    .carousel-track {
+      gap: 10px;
+    }
+
+    .perspective-carousel {
+      perspective: 800px;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .carousel-card {
+      width: 170px;
+      height: 240px;
+      border-radius: 16px;
+    }
+  }
+
+  @media (min-width: 1025px) {
+    .carousel-card {
+      width: 220px;
+      height: 310px;
+      border-radius: 22px;
+    }
+
+    .carousel-track {
+      gap: 20px;
+    }
+  }
+}
+
+/* Animations */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+/* Custom Utilities */
+.text-glow {
+  text-shadow: 0 0 20px rgba(34, 197, 94, 0.4);
+}
+
+.mask-fade-out {
+  mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+}
+
+.hero-gradient {
+  background: radial-gradient(circle at top, rgba(34, 197, 94, 0.1) 0%, transparent 70%);
 }

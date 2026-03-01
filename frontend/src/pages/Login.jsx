@@ -38,10 +38,10 @@ const Login = () => {
                         <Sparkles className="text-white opacity-40" size={28} />
                     </div>
 
-                    <h1 className="text-4xl font-bold mb-4 tracking-tighter uppercase italic text-foreground">
-                        The Hub
+                    <h1 className="text-4xl font-black mb-4 tracking-tight uppercase text-foreground text-center">
+                        PROMPTCOLLECTION
                     </h1>
-                    <p className="text-muted text-[10px] mb-12 tracking-[0.2em] uppercase font-bold opacity-40">
+                    <p className="text-muted text-[10px] mb-12 tracking-[0.1em] uppercase font-bold opacity-40">
                         Initialise Authorisation
                     </p>
 
