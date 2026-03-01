@@ -456,7 +456,7 @@ const Admin = () => {
                                     </div>
                                     <div className="space-y-4">
                                         <p className="text-[10px] font-bold text-muted/20 uppercase tracking-widest px-4">Neural Parameters (Prompt)</p>
-                                        <textarea required rows={5} placeholder="Input coordinates..." value={formData.promptText} onChange={e => setFormData({ ...formData, promptText: e.target.value })} className="styled-input !bg-white/[0.01] !rounded-[2rem] !py-6 !px-8 resize-none font-mono" />
+                                        <textarea required rows={5} placeholder="Input coordinates..." value={formData.promptText} onChange={e => setFormData({ ...formData, promptText: e.target.value })} className="styled-input !bg-white/[0.01] !rounded-[2rem] !py-6 !px-8 resize-none font-medium" />
                                     </div>
                                     <div className="space-y-4">
                                         <p className="text-[10px] font-bold text-muted/20 uppercase tracking-widest px-4">Operational Context</p>

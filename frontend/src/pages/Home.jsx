@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useLocation } from 'react-router-dom';
 import { Copy, Check, X, ChevronLeft, ThumbsUp, Heart, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -460,7 +461,7 @@ const Home = () => {
                                     <div className="space-y-6">
                                         <p className="text-[10px] uppercase font-bold tracking-[0.3em] text-muted/40">Prompt Intelligence</p>
                                         <div className="p-8 bg-card border border-white/5 rounded-[2rem] relative group group-hover:border-white/10 silent-transition">
-                                            <p className="text-sm md:text-base text-foreground/80 font-mono leading-relaxed select-all">
+                                            <p className="text-sm md:text-base text-foreground/80 font-medium leading-relaxed select-all">
                                                 {selectedPrompt.promptText}
                                             </p>
                                             <button
