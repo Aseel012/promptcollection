@@ -7,26 +7,25 @@ export default {
     theme: {
         extend: {
             colors: {
-                background: '#000000',
-                foreground: '#ffffff',
-                card: '#09090b',
-                cardHighlight: '#18181b',
-                muted: '#a1a1aa',
-                border: '#27272a',
+                background: '#090909',
+                foreground: '#FAFAFA',
+                card: '#0D0D0D',
+                cardHighlight: '#141414',
+                muted: '#71717A',
+                border: '#1F1F1F',
                 accent: {
-                    DEFAULT: '#ffffff',
-                    glow: 'rgba(255, 255, 255, 0.1)',
+                    DEFAULT: '#FAFAFA',
+                    glow: 'rgba(250, 250, 250, 0.05)',
                 },
             },
             fontFamily: {
                 sans: ['Inter', 'sans-serif'],
                 mono: ['IBM Plex Mono', 'monospace'],
-                brand: ['Inter', 'sans-serif'],
             },
             animation: {
                 'spotlight': 'spotlight 2s ease .75s 1 forwards',
                 'fade-in': 'fadeIn 0.5s ease-out',
-                'slide-up': 'slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                'slide-up': 'slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
             },
             keyframes: {
                 spotlight: {
@@ -38,7 +37,7 @@ export default {
                     '100%': { opacity: '1' },
                 },
                 slideUp: {
-                    '0%': { opacity: '0', transform: 'translateY(20px)' },
+                    '0%': { opacity: '0', transform: 'translateY(15px)' },
                     '100%': { opacity: '1', transform: 'translateY(0)' },
                 }
             }

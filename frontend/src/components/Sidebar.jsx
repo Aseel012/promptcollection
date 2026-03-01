@@ -14,70 +14,71 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
     ];
 
     const SidebarContent = () => (
-        <div className="py-4 px-3 space-y-6">
+        <div className="py-8 px-5 space-y-10">
             {/* Header for mobile */}
-            <div className="flex items-center gap-4 px-3 mb-6 lg:hidden">
-                <button onClick={closeSidebar} className="p-2 hover:bg-zinc-800 rounded-full transition-colors">
-                    <X size={24} />
+            <div className="flex items-center gap-6 px-2 mb-10 lg:hidden focus:outline-none">
+                <button onClick={closeSidebar} className="p-2 hover:bg-white/5 rounded-full silent-transition">
+                    <X size={20} className="text-muted/40" />
                 </button>
-                <span className="font-black text-xl uppercase tracking-tighter">Promptcollection<span className="text-red-600">.</span></span>
+                <Link to="/" className="flex items-center gap-3">
+                    <div className="w-1.5 h-1.5 bg-foreground rounded-full" />
+                    <span className="text-foreground text-[10px] font-bold uppercase tracking-[0.4em] italic leading-none pt-1">The Hub</span>
+                </Link>
             </div>
 
             {/* Main Nav */}
-            <div className="space-y-1">
+            <div className="space-y-2">
+                <p className="px-4 text-[9px] font-bold text-muted/20 uppercase tracking-[0.3em] mb-4">Core</p>
                 {menuItems.map((item) => (
                     <Link
                         key={item.label}
                         to={item.path}
                         onClick={() => { if (window.innerWidth < 1024) closeSidebar(); }}
-                        className={`flex items-center gap-5 px-3 py-2.5 rounded-xl transition-all ${location.pathname === item.path ? 'bg-zinc-800 text-white font-medium' : 'hover:bg-zinc-800/70 text-zinc-400 hover:text-white'}`}
+                        className={`flex items-center gap-6 px-4 py-3 rounded-2xl silent-transition group ${location.pathname === item.path ? 'bg-white/5 text-foreground' : 'text-muted/40 hover:text-foreground hover:bg-white/[0.02]'}`}
                     >
-                        {item.icon}
-                        <span className="text-sm">{item.label}</span>
+                        <div className={`silent-transition ${location.pathname === item.path ? 'text-foreground' : 'text-muted/20 group-hover:text-muted/60'}`}>
+                            {item.icon}
+                        </div>
+                        <span className="text-[11px] font-bold uppercase tracking-widest">{item.label}</span>
                     </Link>
                 ))}
             </div>
 
-            <div className="h-px bg-white/5 mx-2" />
-
-            {/* Library — navigates to Home with chip active via URL param */}
-            <div className="space-y-1">
-                <p className="px-3 text-xs font-medium text-zinc-600 uppercase tracking-widest mb-2">Library</p>
+            {/* Library */}
+            <div className="space-y-2">
+                <p className="px-4 text-[9px] font-bold text-muted/20 uppercase tracking-[0.3em] mb-4">Intelligence</p>
                 <Link
                     to="/?chip=Recent"
                     onClick={() => { if (window.innerWidth < 1024) closeSidebar(); }}
-                    className="flex items-center gap-5 px-3 py-2.5 rounded-xl hover:bg-zinc-800/70 text-zinc-400 hover:text-white transition-all"
+                    className="flex items-center gap-6 px-4 py-3 rounded-2xl silent-transition text-muted/40 hover:text-foreground hover:bg-white/[0.02] group"
                 >
-                    <Clock size={20} />
-                    <span className="text-sm">Recent</span>
+                    <Clock size={20} className="text-muted/20 group-hover:text-muted/60 silent-transition" />
+                    <span className="text-[11px] font-bold uppercase tracking-widest">Recent Archive</span>
                 </Link>
                 {user && (
                     <Link
                         to="/?chip=Liked"
                         onClick={() => { if (window.innerWidth < 1024) closeSidebar(); }}
-                        className="flex items-center gap-5 px-3 py-2.5 rounded-xl hover:bg-zinc-800/70 text-zinc-400 hover:text-white transition-all"
+                        className="flex items-center gap-6 px-4 py-3 rounded-2xl silent-transition text-muted/40 hover:text-foreground hover:bg-white/[0.02] group"
                     >
-                        <Heart size={20} />
-                        <span className="text-sm">Liked</span>
+                        <Heart size={20} className="text-muted/20 group-hover:text-muted/60 silent-transition" />
+                        <span className="text-[11px] font-bold uppercase tracking-widest">Saved Assets</span>
                     </Link>
                 )}
             </div>
 
             {isAdmin && (
-                <>
-                    <div className="h-px bg-white/5 mx-2" />
-                    <div className="space-y-1">
-                        <p className="px-3 text-xs font-medium text-red-500/50 uppercase tracking-widest mb-2">Internal</p>
-                        <Link
-                            to="/admin"
-                            onClick={() => { if (window.innerWidth < 1024) closeSidebar(); }}
-                            className={`flex items-center gap-5 px-3 py-2.5 rounded-xl transition-all ${location.pathname === '/admin' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-800/70 hover:text-white'}`}
-                        >
-                            <Shield size={20} />
-                            <span className="text-sm">Terminal</span>
-                        </Link>
-                    </div>
-                </>
+                <div className="space-y-2">
+                    <p className="px-4 text-[9px] font-bold text-red-500/20 uppercase tracking-[0.3em] mb-4">System</p>
+                    <Link
+                        to="/admin"
+                        onClick={() => { if (window.innerWidth < 1024) closeSidebar(); }}
+                        className={`flex items-center gap-6 px-4 py-3 rounded-2xl silent-transition group ${location.pathname === '/admin' ? 'bg-red-500/5 text-red-400' : 'text-muted/40 hover:text-red-400/80 hover:bg-red-500/[0.02]'}`}
+                    >
+                        <Shield size={20} className="opacity-20" />
+                        <span className="text-[11px] font-bold uppercase tracking-widest">Terminal</span>
+                    </Link>
+                </div>
             )}
         </div>
     );
@@ -85,7 +86,7 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
     return (
         <>
             {/* Desktop Sidebar */}
-            <aside className={`fixed left-0 top-14 bottom-0 w-64 bg-[#0f0f0f] border-r border-white/5 overflow-y-auto z-40 transition-transform duration-300 transform hidden lg:block ${isOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+            <aside className={`fixed left-0 top-14 bottom-0 w-72 bg-background border-r border-white/[0.03] overflow-y-auto no-scrollbar z-40 transition-all duration-700 ease-in-out ${isOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0'}`}>
                 <SidebarContent />
             </aside>
 
@@ -98,14 +99,14 @@ const Sidebar = ({ isOpen, closeSidebar }) => {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             onClick={closeSidebar}
-                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            className="absolute inset-0 bg-background/60 backdrop-blur-md"
                         />
                         <motion.aside
                             initial={{ x: '-100%' }}
                             animate={{ x: 0 }}
                             exit={{ x: '-100%' }}
-                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-                            className="absolute left-0 top-0 bottom-0 w-72 bg-[#0f0f0f] shadow-2xl overflow-y-auto"
+                            transition={{ type: 'spring', damping: 30, stiffness: 200 }}
+                            className="absolute left-0 top-0 bottom-0 w-80 bg-background border-r border-white/5 shadow-2xl overflow-y-auto no-scrollbar"
                         >
                             <SidebarContent />
                         </motion.aside>

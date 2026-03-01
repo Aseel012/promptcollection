@@ -8,8 +8,9 @@
   body {
     background-color: theme('colors.background');
     color: theme('colors.foreground');
-    @apply antialiased selection:bg-accent selection:text-white;
+    @apply antialiased selection:bg-white selection:text-black;
     font-family: 'Inter', sans-serif;
+    letter-spacing: -0.01em;
   }
 
   h1,
@@ -18,13 +19,13 @@
   h4,
   h5,
   h6 {
-    font-family: 'Inter', sans-serif;
-    @apply font-bold tracking-tight;
+    @apply font-semibold tracking-tight;
+    color: theme('colors.foreground');
   }
 
   ::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+    width: 4px;
+    height: 4px;
   }
 
   ::-webkit-scrollbar-track {
@@ -32,71 +33,70 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: theme('colors.border');
-    border-radius: 10px;
+    background: #1A1A1A;
+    border-radius: 20px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: theme('colors.muted');
+    background: #2A2A2A;
   }
 }
 
 @layer components {
 
-  /* Precision Card */
+  /* Silent Interactive Transition */
+  .silent-transition {
+    @apply transition-all duration-500 cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Precision Aesthetic Card */
   .glass-card {
-    @apply bg-card border border-border rounded-lg transition-all duration-200 hover:bg-cardHighlight hover:border-muted/40 relative overflow-hidden;
+    @apply bg-card border border-border rounded-[1.25rem] overflow-hidden silent-transition;
   }
 
-  /* Inputs & Buttons */
+  .glass-card:hover {
+    @apply border-muted/30 bg-cardHighlight;
+  }
+
+  /* Aesthetic Input */
   .styled-input {
-    @apply bg-card border border-border rounded-md px-4 py-2.5 text-foreground focus:border-foreground/40 outline-none transition-all placeholder:text-muted/50 w-full text-sm;
+    @apply bg-card border border-border rounded-xl px-5 py-3 text-foreground focus:border-foreground/30 outline-none silent-transition placeholder:text-muted/40 w-full text-sm;
   }
 
+  /* Aesthetic Button */
   .styled-button {
-    @apply px-4 py-2 bg-foreground text-background font-medium rounded-md hover:bg-white/90 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm;
+    @apply px-6 py-2.5 bg-foreground text-background font-semibold rounded-full hover:bg-neutral-200 silent-transition active:scale-[0.97] flex items-center justify-center gap-2 text-xs uppercase tracking-widest;
   }
 
   .styled-button-outline {
-    @apply px-4 py-2 border border-border text-foreground font-medium rounded-md hover:bg-cardHighlight transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm;
+    @apply px-6 py-2.5 border border-border text-foreground font-semibold rounded-full hover:bg-cardHighlight silent-transition active:scale-[0.97] flex items-center justify-center gap-2 text-xs uppercase tracking-widest;
   }
 
-  .styled-button-accent {
-    @apply px-4 py-2 bg-foreground text-background font-bold rounded-md hover:bg-white/90 transition-all active:scale-[0.98] flex items-center justify-center gap-2 text-sm;
-  }
-
-  /* High Precision Tags */
+  /* Navigation Tags */
   .glass-tag {
-    @apply px-2.5 py-1 bg-card border border-border rounded-md text-[11px] font-semibold text-muted hover:text-foreground hover:border-muted/40 transition-all whitespace-nowrap cursor-pointer uppercase tracking-wider;
+    @apply px-4 py-1.5 bg-card border border-border rounded-full text-[10px] font-bold text-muted hover:text-foreground hover:border-foreground/20 silent-transition whitespace-nowrap cursor-pointer uppercase tracking-[0.15em];
   }
 
   .glass-tag-active {
-    @apply bg-foreground text-background border-foreground hover:bg-foreground/90;
+    @apply bg-foreground text-background border-foreground hover:bg-neutral-200;
   }
 
-  /* Layout Utilities */
+  /* Layout */
   .page-container {
-    @apply max-w-[1400px] mx-auto px-6 md:px-12 w-full pt-28 pb-20;
+    @apply max-w-[1600px] mx-auto px-6 md:px-10 w-full pt-24 pb-20;
   }
 
-  .hero-gradient {
-    background: radial-gradient(circle at top center, rgba(59, 130, 246, 0.15) 0%, transparent 60%);
-  }
-
-  /* Masonry */
+  /* Masonry Grid */
   .my-masonry-grid {
-    display: flex;
-    margin-left: -24px;
-    width: auto;
+    @apply flex -ml-6 w-auto;
   }
 
   .my-masonry-grid_column {
-    padding-left: 24px;
-    background-clip: padding-box;
+    @apply pl-6 bg-clip-padding;
   }
 
   .my-masonry-grid_column>div {
-    margin-bottom: 24px;
+    @apply mb-6;
   }
 
   .no-scrollbar {
