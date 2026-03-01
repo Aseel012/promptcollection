@@ -46,8 +46,7 @@
 
   /* Silent Interactive Transition */
   .silent-transition {
-    @apply transition-all duration-500;
-    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+    @apply transition-all duration-500 ease-silent;
   }
 
   /* Precision Aesthetic Card */

@@ -22,6 +22,9 @@ export default {
                 sans: ['Inter', 'sans-serif'],
                 mono: ['IBM Plex Mono', 'monospace'],
             },
+            transitionTimingFunction: {
+                'silent': 'cubic-bezier(0.16, 1, 0.3, 1)',
+            },
             animation: {
                 'spotlight': 'spotlight 2s ease .75s 1 forwards',
                 'fade-in': 'fadeIn 0.5s ease-out',
